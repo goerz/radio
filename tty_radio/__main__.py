@@ -70,7 +70,7 @@ def main(do_ui, args=sys.argv[1:]):
     st.daemon = True
     st.start()
     sleep(0.5)
-    ui()
+    ui(settings)
     # TODO clean up thread, mpg123
     return 0
 

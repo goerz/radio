@@ -172,7 +172,7 @@ def get_choice(station, streams):
     # should never be here
 
 
-def ui():
+def ui(settings):
     # set term title
     sys.stdout.write("\x1b]0;" + "~=radio tuner=~" + "\x07")
     c = Client()
@@ -180,7 +180,7 @@ def ui():
     next_st = 'favs'
     while do_another:
         try:
-            next_st = ui_loop(c, next_st)
+            next_st = ui_loop(c, settings, next_st)
         except KeyboardInterrupt:
             do_another = False
         if next_st == 'q':
@@ -189,7 +189,7 @@ def ui():
     sys.stdout.write("\x1b]0;" + "\x07")
 
 
-def ui_loop(client, station='favs'):
+def ui_loop(client, settings, station='favs'):
     """list possible stations, read user input, and call player"""
     # when the player is exited, this loop happens again
     c = client
@@ -231,7 +231,9 @@ def ui_loop(client, station='favs'):
         print('Error, could not get stream details')
         return station
     display_album(stream['art'])
-    display_banner(stream['name'])
+    display_banner(
+        stream['name'],
+        confirm=settings.config['DEFAULT'].getboolean('confirm_banner_font'))
     # this play->pause->play loop should never accumulate lines
     # in the output (except for the first Enter they press
     # at a prompt and even then, it's just an empty line)
@@ -406,7 +408,7 @@ def display_album(art_url):
     print(art)
 
 
-def display_banner(stream_name):
+def display_banner(stream_name, confirm=False):
     unhappy = True
     while unhappy:
         (term_w, term_h) = term_wh()
@@ -418,15 +420,18 @@ def display_banner(stream_name):
             if term_h > (b_height + 3):  # Playing, Station Name, Song Title
                 print('\n' * (term_h - b_height - 2))
             print(banner, end='')
-        with colors(THEME['stream_name_confirm']):
-            prompt = "Press enter if you like banner"
-            prompt += " (font: " + font + "), else any char then enter "
-            try:
-                happiness = get_input(prompt)
-            except SyntaxError:
-                happiness = ''
-            del_prompt(len(prompt) + len(happiness))
-            if len(happiness) == 0:
-                unhappy = False
-            else:
-                print("")  # empty line for pretty factor
+        if confirm:
+            with colors(THEME['stream_name_confirm']):
+                prompt = "Press enter if you like banner"
+                prompt += " (font: " + font + "), else any char then enter "
+                try:
+                    happiness = get_input(prompt)
+                except SyntaxError:
+                    happiness = ''
+                del_prompt(len(prompt) + len(happiness))
+                if len(happiness) == 0:
+                    unhappy = False
+                else:
+                    print("")  # empty line for pretty factor
+        else:
+            unhappy = False

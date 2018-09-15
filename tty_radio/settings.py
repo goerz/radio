@@ -13,6 +13,7 @@ class Settings(object):
         self.config = configparser.ConfigParser()
         self.config['DEFAULT'] = {
             'theme': 'auto',
+            'confirm_banner_font': 'no',
         }
         self.config['theme_miami_vice'] = {
             'ui_banner': 'red',
