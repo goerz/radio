@@ -283,6 +283,9 @@ def display_info():
         else:
             print(msg1 + ' ' + msg2)
 
+def meta_prefix_str(theme):
+    return theme['meta_prefix_str'] + " " * int(theme['meta_prefix_pad'])
+
 
 def display_metadata(client, stream):
     # to test these updates against another stream
@@ -315,7 +318,7 @@ def display_metadata(client, stream):
         if COMPACT_TITLES:
             print("\033[A" * 2, end='')
         print_blockify(
-            THEME['meta_prefix_str'], THEME['meta_prefix'],
+            meta_prefix_str(THEME), THEME['meta_prefix'],
             disp_name, THEME['meta_stream_name'],
             wrap=False)
         if COMPACT_TITLES:
@@ -338,7 +341,7 @@ def display_metadata(client, stream):
             if not showed_name:
                 print("\033[A", end='')
         song_len = print_blockify(
-            THEME['meta_prefix_str'], THEME['meta_prefix'],
+            meta_prefix_str(THEME), THEME['meta_prefix'],
             song_name, THEME['meta_song_name'],
             wrap=False)[0]
         if COMPACT_TITLES and not showed_name:
@@ -359,7 +362,7 @@ def display_metadata(client, stream):
                 if song_len > 0:
                     del_prompt(song_len)
             song_len = print_blockify(
-                THEME['meta_prefix_str'], THEME['meta_prefix'],
+                meta_prefix_str(THEME), THEME['meta_prefix'],
                 song_now, THEME['meta_song_name'],
                 wrap=False)[0]
             song_name = song_now
