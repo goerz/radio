@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import sys
 
 
@@ -28,7 +29,17 @@ light = {
     'meta_song_name': 'blue',
     'stream_exit_confirm': 'purple',
 }
-THEME = miami_vice
+
+
+def term_bg_is_dark():
+    """Return True if the terminal background is dark, False otherwise"""
+    fg, bg = os.environ.get('COLORFGBG', '0;15').split(";")
+    return (int(bg) == 8 or int(bg) <= 6)
+
+
+THEME = light
+if term_bg_is_dark():
+    THEME = miami_vice
 
 
 class colors:
