@@ -10,12 +10,16 @@ from .api import Server
 from .ui import term_wh
 from .color import colors
 from .banner import bannerize
-
+from .settings import Settings
 
 
 USAGE = """\
-Usage %s [-h|--help]
+Usage %s OPTIONS
+
+OPTIONS:
+
 \t-h or --help\tThis help message
+\t--show-config\tShow the active configuration (~/.tty_radio-settings.ini)
 
 To use Terminal UI:
   Select station at prompt, by entering number found in left column
@@ -44,17 +48,20 @@ def usage():
 # TODO host option to opts
 def main(do_ui, args=sys.argv[1:]):
     try:
-        opts, args = getopt(args, 'h', ['help'])
-    except GetoptError:
+        opts, args = getopt(args, 'h', ['help', 'show-config'])
+    except GetoptError as exc_info:
+        print("Error: %s\n" % str(exc_info))
         usage()
         return 2
+    settings = Settings()
     for opt, arg in opts:
         if opt in ['-h', '--help']:
             usage()
             return 0
-        else:
-            usage()
-            return 1
+    for opt, arg in opts:
+        if opt in ['--show-config']:
+            settings.config.write(sys.stdout)
+            return 0
     s = Server()
     if not do_ui:
         s.run()

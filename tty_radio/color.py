@@ -1,34 +1,8 @@
 from __future__ import print_function
+import time
 import os
 import sys
-
-
-# for a dark terminal, like black, solarized, or zenburn
-miami_vice = {
-    'ui_banner': 'red',
-    'ui_names': 'yellow',
-    'ui_desc': 'green',
-    'stream_name_banner': 'yellow',
-    'stream_name_confirm': 'purple',
-    'meta_prefix_str': '>>> ',
-    'meta_prefix': 'blue',
-    'meta_stream_name': 'blue',
-    'meta_song_name': 'blue',
-    'stream_exit_confirm': 'purple',
-}
-# for a light terminal
-light = {
-    'ui_banner': 'purple',
-    'ui_names': 'blue',
-    'ui_desc': 'grey',
-    'stream_name_banner': 'grey',
-    'stream_name_confirm': 'purple',
-    'meta_prefix_str': '>>> ',
-    'meta_prefix': 'blue',
-    'meta_stream_name': 'blue',
-    'meta_song_name': 'blue',
-    'stream_exit_confirm': 'purple',
-}
+from .settings import Settings
 
 
 def term_bg_is_dark():
@@ -37,9 +11,34 @@ def term_bg_is_dark():
     return (int(bg) == 8 or int(bg) <= 6)
 
 
-THEME = light
-if term_bg_is_dark():
-    THEME = miami_vice
+def set_theme_from_settings():
+    settings = Settings()
+    theme = settings.config['DEFAULT']['theme']
+    if theme == 'auto':
+        theme = 'light'
+        if term_bg_is_dark():
+            theme = 'miami_vice'
+    try:
+        return dict(settings.config['theme_' + theme])
+    except KeyError:
+        print("##############################################################")
+        print("ERROR")
+        print("No theme '%s' defined in the config file (%s)"
+              % (theme, settings.file))
+        print("")
+        print("The config file must contain a section 'theme_%s'" % theme)
+        print("See e.g. 'theme_light' in config (--show-config)")
+        print("")
+        print("Fallback to 'auto'")
+        print("##############################################################")
+        time.sleep(5)
+        if term_bg_is_dark():
+            return dict(settings.config['theme_miami_vice'])
+        else:
+            return dict(settings.config['theme_light'])
+
+
+THEME = set_theme_from_settings()
 
 
 class colors:
