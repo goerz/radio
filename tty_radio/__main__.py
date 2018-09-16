@@ -160,8 +160,13 @@ def play(station, stream):
     '--song', is_flag=True,
     help='Print the current song or stream name if not stopped.')
 @click.option(
+    '--stream', is_flag=True,
+    help='Print the current stream name. In combination with --song, two '
+    'lines may be printed (stream name on the first line, song title on '
+    'the second line)')
+@click.option(
     '--quiet', is_flag=True, help='Fail silenty if no server is running')
-def status(song, quiet):
+def status(song, stream, quiet):
     """Print the player status.
 
     ``radio status --song --quiet`` is useful to generate a string to be shown
@@ -170,7 +175,9 @@ def status(song, quiet):
     try:
         status = Client().status()
         if song:
-            click.echo(_render_song_str(status))
+            click.echo(_render_song_str(status, show_stream=stream))
+        elif stream:
+            click.echo(status['stream'])
         else:
             click.echo(json.dumps(status))
     except ApiConnError:

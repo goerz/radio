@@ -194,7 +194,7 @@ class NotifyClient(object):
             return None, None
 
 
-def _render_song_str(status, show_stopped=False):
+def _render_song_str(status, show_stopped=False, show_stream=True):
     stream = status['stream']
     if status['currently_streaming']:
         if status['paused']:
@@ -204,6 +204,9 @@ def _render_song_str(status, show_stopped=False):
             song_str = status['song']
             if song_str == "No Title in Metadata":
                 song_str = status['stream']
+            else:
+                if show_stream and stream is not None and len(str(stream)) > 0:
+                    song_str = "%s\n%s" % (stream, song_str)
     else:
         if show_stopped:
             if stream is not None and len(str(stream)) > 0:
