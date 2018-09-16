@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import sys
+import json
 from time import sleep
 from threading import Thread
 from getopt import getopt, GetoptError
@@ -155,10 +156,24 @@ def play(station, stream):
 
 
 @radio.command()
-def status():
-    """Print the player status, as json-formatted string."""
+@click.option(
+    '--song', is_flag=True,
+    help='Print the current song name only, or a status indicator if '
+    'paused/stopped')
+def status(song):
+    """Print the player status"""
     try:
-        click.echo(Client().status())
+        status = Client().status()
+        if song:
+            if status['paused']:
+                song_str = '(paused)'
+            else:
+                song_str = status['song']
+                if song_str == "No Title in Metadata":
+                    song_str = "(stopped)"
+            click.echo(song_str)
+        else:
+            click.echo(json.dumps(status))
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)
@@ -168,7 +183,8 @@ def status():
 def stations():
     """List stations and feeds, as json-formatted string"""
     try:
-        click.echo(Client().stations())
+        stations = Client().stations()
+        click.echo(json.dumps(stations))
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)
