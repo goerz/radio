@@ -150,26 +150,56 @@ def stop():
         sys.exit(1)
 
 
-@click.option(
-    '--station', default='favs',
-    help='The "station" to play (\'favs\' (default) or \'soma\', see '
-    '`radio stations`)')
-@click.option(
-    '--stream',
-    help='Name of stream to play (see `radio stations`)')
-@radio.command()
-def play(station, stream):
-    """(alias: start) Re-start playback.
+def _find_station(stations, search_str, station):
+    search_str = search_str.replace(" ", "").lower()
+    for station_dict in stations:
+        station_name = station_dict['name']
+        if station is not None and station != station_name:
+            continue
+        for stream_name in station_dict['streams']:
+            if search_str in stream_name.replace(" ", "").lower():
+                return station_name, stream_name
 
-    Run as `radio play` to re-start playback after `radio pause` or `radio
-    stop`. Use --station and --stream options to select and play a new radio
-    stream. This works only if playback is stopped (not paused).
+
+@click.option(
+    '--station',
+    help='The "station" to which to limit searching for a stream '
+    '(\'favs\' or \'soma\', see `radio stations`)')
+@click.argument('search', nargs=-1)
+@radio.command()
+def play(station, search):
+    """(alias: start) start or re-start playback.
+
+    Run as `radio play` without arguments to re-start playback after `radio
+    pause` or `radio stop`. To start playback of a particular station, either
+    use SEARCH arguments, possibly in combination with --station: all available
+    streams are searched for a matching stream name (case-insensitive, ignoring
+    whitespace).
     """
     try:
         client = Client()
+        stream = None
+        if len(search) > 0:
+            search_str = "".join(search)
+            stations = Client().stations()
+            try:
+                station, stream = _find_station(stations, search_str, station)
+            except TypeError:
+                if station is None:
+                    click.echo(
+                        "Cannot find a stream matching '%s'" % search_str)
+                else:
+                    click.echo(
+                        "Cannot find a stream matching '%s' in station '%s'"
+                        % (search_str, station))
+                sys.exit(1)
+            click.echo("Playing station: %s" % stream)
         status = client.status()
         if not status['paused'] or status['currently_streaming']:
             client.stop()
+        if stream is None and status['stream'] is None:
+            click.echo("No active stream. Specify a stream name")
+            sys.exit(1)
         client.play(station, stream)
     except ApiConnError:
         click.echo("Cannot connect to server")
