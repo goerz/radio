@@ -102,6 +102,7 @@ class NotifyClient(object):
                     time.sleep(5)
                     continue
                 if status == prev_status:
+                    time.sleep(1.0)
                     continue
                 else:
                     prev_status = status
