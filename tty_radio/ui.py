@@ -297,10 +297,13 @@ def display_metadata(client, stream):
     if COMPACT_TITLES:
         print()
         print()
-    # don't assume that it's not playing from another client
+    # stop anything playing from another client
+    status = c.status()
+    if status['currently_streaming'] and not status['paused']:
+        c.stop()
     if not c.play(station_name, stream_name):
-        print('Error, already playing %s' % c.status())
-        # TODO ignore if playing what was requested
+        print('Error for stream %s, already playing %s' % (stream, status))
+        c.stop()
         return False
     showed_name = False
     i = 0

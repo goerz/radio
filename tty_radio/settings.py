@@ -15,6 +15,7 @@ class Settings(object):
             'theme': 'auto',
             'confirm_banner_font': 'no',
             'scrobble': 'no',
+            'update_btt_widget': '',
             'notify_logfile': '',
         }
         self.config['theme_miami_vice'] = {

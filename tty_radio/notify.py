@@ -3,6 +3,7 @@ from __future__ import print_function
 from os.path import expanduser
 import time
 import datetime
+import subprocess
 
 from .api import Client, ApiConnError
 
@@ -31,6 +32,8 @@ class NotifyClient(object):
     def __init__(self, settings):
         self._scrobble = (
             settings.config['DEFAULT'].getboolean('scrobble') and PYLAST)
+        self._btt_widget = settings.config['DEFAULT']['update_btt_widget']
+        self._update_btt = len(self._btt_widget) > 0
         logfile = settings.config['DEFAULT']['notify_logfile']
         if len(logfile) > 0:
             self._log_fh = open(expanduser(logfile), 'w')
@@ -71,6 +74,7 @@ class NotifyClient(object):
             timestamp (bool): if True, prepend a timestamp to `msg` in the log
             file
         """
+        msg = str(msg)
         if self._log_fh is not None:
             if timestamp:
                 timestamp = datetime.datetime.now().strftime(
@@ -85,13 +89,14 @@ class NotifyClient(object):
     def run(self):
         """Run the event loop
 
-        If scrobbling is deactivated, return immediately.
+        If scrobbling and btt updating is deactivated, return immediately.
         """
         current_artist = None
         current_title = None
         current_timestamp = 0
         try:
-            if not self._scrobble:
+            if not (self._scrobble or self._update_btt):
+                self.log("Exit event loop: nothing to do")
                 return
             prev_status = None
             while True:
@@ -105,19 +110,21 @@ class NotifyClient(object):
                     time.sleep(1.0)
                     continue
                 else:
+                    self.update_btt(status)
                     prev_status = status
                 self.log("status = %s" % str(status))
                 artist, title = self._get_artist_title(status)
                 if artist != current_artist or title != current_title:
                     timestamp = int(time.time())
-                    need_to_scrobble = (
-                        current_artist is not None and
-                        current_title is not None and
-                        timestamp - current_timestamp > 30)
-                    if need_to_scrobble:
-                        self.scrobble(
-                            current_artist, current_title,
-                            current_timestamp)
+                    if self._scrobble:
+                        need_to_scrobble = (
+                            current_artist is not None and
+                            current_title is not None and
+                            timestamp - current_timestamp > 30)
+                        if need_to_scrobble:
+                            self.scrobble(
+                                current_artist, current_title,
+                                current_timestamp)
                     current_artist = artist
                     current_title = title
                     current_timestamp = timestamp
@@ -127,9 +134,23 @@ class NotifyClient(object):
                 time.sleep(1.0)
         except Exception as exc_info:
             self.log("FATAL: %s" % str(exc_info))
+            raise
         finally:
             if self._log_fh is not None:
                 self._log_fh.close()
+
+    def update_btt(self, status):
+        if not self._update_btt:
+            return
+        song_str = _render_song_str(status)
+        song_str = song_str.replace("'", "\'")
+        cmd = [
+            'osascript', '-e',
+            'tell application "BetterTouchTool" '
+            'to update_touch_bar_widget "' + self._btt_widget +
+            '" text "' + song_str + '"']
+        self.log(cmd)
+        subprocess.call(cmd)
 
     def scrobble(self, artist, title, timestamp):
         """Send a scrobble to Last.fm
@@ -171,3 +192,24 @@ class NotifyClient(object):
         except (ValueError, AttributeError, KeyError) as exc_info:
             self.log("cannot get artist/title: %s" % exc_info)
             return None, None
+
+
+def _render_song_str(status, show_stopped=False):
+    stream = status['stream']
+    if status['currently_streaming']:
+        if status['paused']:
+            if stream is not None and len(str(stream)) > 0:
+                song_str = '(paused: %s)' % stream
+        else:
+            song_str = status['song']
+            if song_str == "No Title in Metadata":
+                song_str = status['stream']
+    else:
+        if show_stopped:
+            if stream is not None and len(str(stream)) > 0:
+                song_str = '(stopped: %s)' % stream
+            else:
+                song_str = '(stopped)'
+        else:
+            song_str = ""
+    return song_str

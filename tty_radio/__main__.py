@@ -14,7 +14,7 @@ from .api import Server, Client, ApiConnError
 from .ui import term_wh
 from .color import colors
 from .settings import Settings
-from .notify import NotifyClient
+from .notify import NotifyClient, _render_song_str
 
 
 __version__ = '2.0.0'
@@ -74,7 +74,7 @@ def radio(ctx, debug):
     terminal UI.
 
     All other commands constitute the scripting interface. They assume a
-    running server.
+    running server. Run ``radio COMMAND --help`` for details on each command.
 
     \b
     About
@@ -158,24 +158,24 @@ def play(station, stream):
 @radio.command()
 @click.option(
     '--song', is_flag=True,
-    help='Print the current song name only, or a status indicator if '
-    'paused/stopped')
-def status(song):
-    """Print the player status"""
+    help='Print the current song or stream name if not stopped.')
+@click.option(
+    '--quiet', is_flag=True, help='Fail silenty if no server is running')
+def status(song, quiet):
+    """Print the player status.
+
+    ``radio status --song --quiet`` is useful to generate a string to be shown
+    in a UI element.
+    """
     try:
         status = Client().status()
         if song:
-            if status['paused']:
-                song_str = '(paused)'
-            else:
-                song_str = status['song']
-                if song_str == "No Title in Metadata":
-                    song_str = "(stopped)"
-            click.echo(song_str)
+            click.echo(_render_song_str(status))
         else:
             click.echo(json.dumps(status))
     except ApiConnError:
-        click.echo("Cannot connect to server")
+        if not quiet:
+            click.echo("Cannot connect to server")
         sys.exit(1)
 
 
@@ -191,7 +191,9 @@ def stations():
 
 
 @radio.command()
-def toggle():
+@click.option(
+    '--stop', is_flag=True, help='stop, instead of pause')
+def toggle(stop):
     """Toggle between play/pause."""
     try:
         client = Client()
@@ -199,10 +201,13 @@ def toggle():
         if status['stream'] is None:
             click.echo("Not tuned into a stream")
             return
-        if status['paused']:
+        if status['paused'] or not status['currently_streaming']:
             client.play()
         else:
-            client.pause()
+            if stop:
+                client.stop()
+            else:
+                client.pause()
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)
