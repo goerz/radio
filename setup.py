@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='tty_radio',
     packages=['tty_radio'],
-    version='1.1.2',
+    version='2.0.0',
     description=(
         "Linux/OS X RESTful player for online radio streams, " +
         "like SomaFM and WCPE. Comes with a terminal UI " +
@@ -19,12 +19,12 @@ setup(
         'beautifulsoup4',
         'pyfiglet',
         'bottle',
-        'requests'
+        'requests',
+        'click',
     ],
     entry_points={
         'console_scripts': [
-            'radio = tty_radio.__main__:main_ui',
-            'radio_server = tty_radio.__main__:main_serv',
+            'radio = tty_radio.__main__:radio',
         ]
     },
     include_package_data=True,

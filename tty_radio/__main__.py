@@ -4,65 +4,23 @@ import sys
 from time import sleep
 from threading import Thread
 from getopt import getopt, GetoptError
+import logging
 
-from .ui import ui
+import click
+
+from .ui import ui as start_ui
 from .api import Server
 from .ui import term_wh
 from .color import colors
-from .banner import bannerize
 from .settings import Settings
 from .notify import NotifyClient
 
 
-USAGE = """\
-Usage %s OPTIONS
-
-OPTIONS:
-
-\t-h or --help\tThis help message
-\t--show-config\tShow the active configuration (~/.tty_radio-settings.ini)
-
-To use Terminal UI:
-  Select station at prompt, by entering number found in left column
-  Enjoy
-
-About:
-  RESTful service for listening to online music streams.
-  Built-in compatibility with SomaFM.
-  Add custom station scrapers or manually add to ~/.tty_radio-favs.csv.
-  Organizes your stations into a list to select from, then calls mpg123.
-  (You can use any player that doesn't buffer stdout.)
-  And let's not forget the pretty ASCII art...
-"""
+__version__ = '2.0.0'
 
 
-def usage():
-    print(USAGE % sys.argv[0])
-    (term_w, term_h) = term_wh()
-    (banner, font) = bannerize('ASCII Art, FTW!', term_w)
-    with colors('purple'):  # or blue, green, yellow, red
-        print(banner)
-    print('Font: ' + font)
-
-
-# TODO add entry point to scrape/CRUD station files
-# TODO host option to opts
-def main(do_ui, args=sys.argv[1:]):
-    try:
-        opts, args = getopt(args, 'h', ['help', 'show-config'])
-    except GetoptError as exc_info:
-        print("Error: %s\n" % str(exc_info))
-        usage()
-        return 2
+def main(do_ui):
     settings = Settings()
-    for opt, arg in opts:
-        if opt in ['-h', '--help']:
-            usage()
-            return 0
-    for opt, arg in opts:
-        if opt in ['--show-config']:
-            settings.config.write(sys.stdout)
-            return 0
 
     notify_client = NotifyClient(settings)
     notify_thread = Thread(
@@ -78,18 +36,74 @@ def main(do_ui, args=sys.argv[1:]):
     st.daemon = True
     st.start()
     sleep(0.5)
-    ui(settings)
-    # TODO clean up thread, mpg123
-    return 0
+    start_ui(settings)
 
 
-def main_ui():
-    return main(True)
+def print_config(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    settings = Settings()
+    settings.config.write(sys.stdout)
+    ctx.exit()
 
 
-def main_serv():
-    return main(False)
+@click.group(invoke_without_command=True)
+@click.help_option('--help', '-h')
+@click.version_option(version=__version__)
+@click.option(
+    '--debug', is_flag=True,
+    help='Enable debug logging')
+@click.option(
+    '--show-config', is_flag=True, callback=print_config,
+    expose_value=False, is_eager=True,
+    help='Show the active configuration ')
+@click.pass_context
+def radio(ctx, debug):
+    """
+    \b
+    tty-radio User Interfaces
+    -------------------------
+
+    The interactive terminal user interface is shown if `radio` is run without
+    arguments, or with the `ui` command (`radio ui`).
+    Select station at prompt, by entering number found in left column
+
+    The web UI can be accessed at http://localhost:7887.
+    The `radio server` command starts the server without the interactive
+    terminal UI.
+
+    \b
+    About
+    -----
+
+    RESTful service for listening to online music streams.
+    Built-in compatibility with SomaFM.
+    Add custom station scrapers or manually add to ~/.tty_radio-favs.csv.
+    Organizes your stations into a list to select from, then calls mpg123.
+    (You can use any player that doesn't buffer stdout.)
+    And let's not forget the pretty ASCII art...
+
+    The program reads settings from the ~/.tty_radio-settings.ini config file.
+    If this file does not exist, it will be created with the default settings.
+    A complete config file with all currently active settings can be obtained
+    via the `--show-config` option.
+    """
+    logging.basicConfig(level=logging.WARNING)
+    logger = logging.getLogger(__name__)
+    if debug:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Enabled debug output")
+    if ctx.invoked_subcommand is None:
+        main(do_ui=True)
 
 
-if __name__ == "__main__":
-    sys.exit(main_serv())
+@radio.command()
+def server():
+    """Run server without interactive terminal UI"""
+    main(do_ui=False)
+
+
+@radio.command()
+def ui():
+    """Run server with interactive terminal UI"""
+    main(do_ui=True)
