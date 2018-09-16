@@ -115,6 +115,7 @@ class Server(object):
         success = True
         resp = {
             'currently_streaming': self.radio.is_playing,
+            'paused': self.radio.is_paused,
             'station': self.radio.station,
             'stream': self.radio.stream,
             'song': self.radio.song
