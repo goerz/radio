@@ -102,13 +102,13 @@ def radio(ctx, debug):
 
 @radio.command()
 def server():
-    """Run server without interactive terminal UI"""
+    """Run server without interactive terminal UI."""
     main(do_ui=False)
 
 
 @radio.command()
 def ui():
-    """Run server with interactive terminal UI"""
+    """Run server with interactive terminal UI."""
     main(do_ui=True)
 
 
@@ -169,6 +169,24 @@ def stations():
     """List stations and feeds, as json-formatted string"""
     try:
         click.echo(Client().stations())
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@radio.command()
+def toggle():
+    """Toggle between play/pause."""
+    try:
+        client = Client()
+        status = client.status()
+        if status['stream'] is None:
+            click.echo("Not tuned into a stream")
+            return
+        if status['paused']:
+            client.play()
+        else:
+            client.pause()
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)

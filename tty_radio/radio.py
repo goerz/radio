@@ -115,9 +115,15 @@ class Radio(object):
         return (self.station, self.stream)
 
     def pause(self):
-        self._stream.pause()
+        try:
+            self._stream.pause()
+        except AttributeError:
+            pass
         return (self.station, self.stream)
 
     def stop(self):
-        self._stream.stop()
+        try:
+            self._stream.stop()
+        except AttributeError:
+            pass
         return (self.station, self.stream)
