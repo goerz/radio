@@ -11,6 +11,7 @@ from .ui import term_wh
 from .color import colors
 from .banner import bannerize
 from .settings import Settings
+from .notify import NotifyClient
 
 
 USAGE = """\
@@ -62,6 +63,13 @@ def main(do_ui, args=sys.argv[1:]):
         if opt in ['--show-config']:
             settings.config.write(sys.stdout)
             return 0
+
+    notify_client = NotifyClient(settings)
+    notify_thread = Thread(
+        name='notify_client', target=notify_client.run)
+    notify_thread.daemon = True
+    notify_thread.start()
+
     s = Server()
     if not do_ui:
         s.run()

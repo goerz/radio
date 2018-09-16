@@ -14,6 +14,8 @@ class Settings(object):
         self.config['DEFAULT'] = {
             'theme': 'auto',
             'confirm_banner_font': 'no',
+            'scrobble': 'no',
+            'notify_logfile': '',
         }
         self.config['theme_miami_vice'] = {
             'ui_banner': 'red',
@@ -40,6 +42,12 @@ class Settings(object):
             'meta_stream_name': 'blue',
             'meta_song_name': 'blue',
             'stream_exit_confirm': 'purple',
+        }
+        self.config['Lastfm'] = {
+            'api key': 'b25b959554ed76058ac220b7b2e0a026',
+            'shared secret': '425b55975eed76058ac220b7b4e8a054',
+            'username': 'username',
+            'password hash': '25b5192f9943196a6044ca1b6b1d30c2',
         }
         home = expanduser('~')
         self.file = path_join(home, SETTINGS_FILE)
