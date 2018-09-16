@@ -9,7 +9,7 @@ SETTINGS_FILE = ".tty_radio-settings.ini"
 
 
 class Settings(object):
-    def __init__(self):
+    def __init__(self, theme=None):
         self.config = configparser.ConfigParser()
         self.config['DEFAULT'] = {
             'theme': 'auto',
@@ -53,6 +53,8 @@ class Settings(object):
         home = expanduser('~')
         self.file = path_join(home, SETTINGS_FILE)
         self.config.read([self.file])
+        if theme is not None:
+            self.config['DEFAULT']['theme'] = theme
         if not os.path.isfile(self.file):
             with open(self.file, 'w') as out_fh:
                 self.config.write(out_fh)

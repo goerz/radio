@@ -12,7 +12,7 @@ import click
 from .ui import ui as start_ui
 from .api import Server, Client, ApiConnError
 from .ui import term_wh
-from .color import colors
+from .color import colors, update_theme
 from .settings import Settings
 from .notify import NotifyClient, _render_song_str
 
@@ -20,8 +20,9 @@ from .notify import NotifyClient, _render_song_str
 __version__ = '2.0.0'
 
 
-def main(do_ui):
-    settings = Settings()
+def main(do_ui, theme=None):
+    settings = Settings(theme=theme)
+    update_theme(settings)
 
     notify_client = NotifyClient(settings)
     notify_thread = Thread(
@@ -30,21 +31,26 @@ def main(do_ui):
     notify_thread.start()
 
     try:
-        Client().status()
-    except ApiConnError:
-        s = Server()
+        # is there a server running already?
+        Client().status()  # raises APiConnError
         if not do_ui:
+            click.echo("Server already running")
+            sys.exit(1)
+    except ApiConnError:
+        # no server running ...
+        s = Server()
+        if do_ui:
+            # ... start in background thread
+            st = Thread(target=s.run)
+            st.daemon = True
+            st.start()
+            sleep(0.5)
+        else:
+            # ... start in foreground
             s.run()
             sys.exit(0)
-        st = Thread(target=s.run)
-        st.daemon = True
-        st.start()
-        sleep(0.5)
     if do_ui:
         start_ui(settings)
-    else:
-        click.echo("Server already running")
-        sys.exit(1)
 
 
 def print_config(ctx, param, value):
@@ -131,10 +137,13 @@ def server():
     main(do_ui=False)
 
 
+@click.option(
+    '--theme', metavar='NAME',
+    help="Name of theme to use. Overrides setting in config file.")
 @radio.command()
-def ui():
+def ui(theme):
     """Run server with interactive terminal UI."""
-    main(do_ui=True)
+    main(do_ui=True, theme=theme)
 
 
 @radio.command()

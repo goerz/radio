@@ -11,8 +11,9 @@ def term_bg_is_dark():
     return (int(bg) == 8 or int(bg) <= 6)
 
 
-def set_theme_from_settings():
-    settings = Settings()
+def set_theme_from_settings(settings=None):
+    if settings is None:
+        settings = Settings()
     theme = settings.config['DEFAULT']['theme']
     if theme == 'auto':
         theme = 'light'
@@ -39,6 +40,11 @@ def set_theme_from_settings():
 
 
 THEME = set_theme_from_settings()
+
+
+def update_theme(settings):
+    theme = set_theme_from_settings(settings)
+    THEME.update(theme)
 
 
 class colors:
