@@ -48,7 +48,24 @@ def print_config(ctx, param, value):
     ctx.exit()
 
 
-@click.group(invoke_without_command=True)
+class AliasedGroup(click.Group):
+
+    def get_command(self, ctx, cmd_name):
+        rv = click.Group.get_command(self, ctx, cmd_name)
+        if rv is not None:
+            return rv
+        matches = [x for x in self.list_commands(ctx)
+                   if x.startswith(cmd_name)]
+        if cmd_name == 'start':
+            matches = ['play']
+        if not matches:
+            return None
+        elif len(matches) == 1:
+            return click.Group.get_command(self, ctx, matches[0])
+        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+
+
+@click.group(cls=AliasedGroup, invoke_without_command=True)
 @click.help_option('--help', '-h')
 @click.version_option(version=__version__)
 @click.option(
@@ -142,14 +159,18 @@ def stop():
     help='Name of stream to play (see `radio stations`)')
 @radio.command()
 def play(station, stream):
-    """Start stopped playback, or restart paused playback.
+    """(alias: start) Re-start playback.
 
     Run as `radio play` to re-start playback after `radio pause` or `radio
     stop`. Use --station and --stream options to select and play a new radio
     stream. This works only if playback is stopped (not paused).
     """
     try:
-        Client().play(station, stream)
+        client = Client()
+        status = client.status()
+        if not status['paused'] or status['currently_streaming']:
+            client.stop()
+        client.play(station, stream)
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)
