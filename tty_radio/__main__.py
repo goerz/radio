@@ -29,15 +29,22 @@ def main(do_ui):
     notify_thread.daemon = True
     notify_thread.start()
 
-    s = Server()
-    if not do_ui:
-        s.run()
-        return 0
-    st = Thread(target=s.run)
-    st.daemon = True
-    st.start()
-    sleep(0.5)
-    start_ui(settings)
+    try:
+        Client().status()
+    except ApiConnError:
+        s = Server()
+        if not do_ui:
+            s.run()
+            sys.exit(0)
+        st = Thread(target=s.run)
+        st.daemon = True
+        st.start()
+        sleep(0.5)
+    if do_ui:
+        start_ui(settings)
+    else:
+        click.echo("Server already running")
+        sys.exit(1)
 
 
 def print_config(ctx, param, value):
