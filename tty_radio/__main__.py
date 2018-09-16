@@ -9,7 +9,7 @@ import logging
 import click
 
 from .ui import ui as start_ui
-from .api import Server
+from .api import Server, Client, ApiConnError
 from .ui import term_wh
 from .color import colors
 from .settings import Settings
@@ -72,6 +72,9 @@ def radio(ctx, debug):
     The `radio server` command starts the server without the interactive
     terminal UI.
 
+    All other commands constitute the scripting interface. They assume a
+    running server.
+
     \b
     About
     -----
@@ -107,3 +110,65 @@ def server():
 def ui():
     """Run server with interactive terminal UI"""
     main(do_ui=True)
+
+
+@radio.command()
+def pause():
+    """Pause playback."""
+    try:
+        Client().pause()
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@radio.command()
+def stop():
+    """Stop playback."""
+    try:
+        Client().stop()
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@click.option(
+    '--station', default='favs',
+    help='The "station" to play (\'favs\' (default) or \'soma\', see '
+    '`radio stations`)')
+@click.option(
+    '--stream',
+    help='Name of stream to play (see `radio stations`)')
+@radio.command()
+def play(station, stream):
+    """Start stopped playback, or restart paused playback.
+
+    Run as `radio play` to re-start playback after `radio pause` or `radio
+    stop`. Use --station and --stream options to select and play a new radio
+    stream. This works only if playback is stopped (not paused).
+    """
+    try:
+        Client().play(station, stream)
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@radio.command()
+def status():
+    """Print the player status, as json-formatted string."""
+    try:
+        click.echo(Client().status())
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@radio.command()
+def stations():
+    """List stations and feeds, as json-formatted string"""
+    try:
+        click.echo(Client().stations())
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
