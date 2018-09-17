@@ -29,11 +29,9 @@ def main(do_ui, theme=None, vol=None):
         sys.exit(1)
     update_theme(settings)
     Stream.vol = settings.config['DEFAULT']['volume']
-    notify_client = NotifyClient(settings)
-    notify_thread = Thread(
-        name='notify_client', target=notify_client.run)
-    notify_thread.daemon = True
-    notify_thread.start()
+
+    s = None
+    run_server_in_fg = False
 
     try:
         # is there a server running already?
@@ -45,19 +43,27 @@ def main(do_ui, theme=None, vol=None):
         # no server running ...
         s = Server()
         if do_ui:
-            # ... start in background thread
+            # ... start server in background thread
             st = Thread(target=s.run)
             st.daemon = True
             st.start()
-            sleep(0.5)
+            sleep(1.0)
         else:
-            # ... start in foreground
-            s.run()
-            sys.exit(0)
+            run_server_in_fg = True  # delayed
+
+    # run notify-client in background
+    notify_client = NotifyClient(settings)
+    notify_thread = Thread(
+        name='notify_client', target=notify_client.run)
+    notify_thread.daemon = True
+    notify_thread.start()
+
+    # foreground process:
     if do_ui:
         start_ui(settings)
-
-
+    elif run_server_in_fg:
+        s.run()
+    sys.exit(0)
 
 
 def _get_volume_input_format(value):
