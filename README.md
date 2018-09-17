@@ -45,6 +45,9 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     figlet_banners = yes
     confirm_banner_font = no
     theme = auto
+    light_theme = light
+    fallback_theme = bw
+    dark_theme = miami_vice
 
     [Server]
     volume = 11000
@@ -77,6 +80,19 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     ui_desc = grey
     meta_prefix_pad = 1
     ui_names = blue
+
+    [theme_bw]
+    ui_banner = endc
+    meta_prefix_pad = 1
+    meta_song_name = endc
+    stream_name_banner = endc
+    meta_stream_name = endc
+    meta_prefix = endc
+    ui_names = endc
+    stream_name_confirm = endc
+    stream_exit_confirm = endc
+    meta_prefix_str = >>>
+    ui_desc = endc
 
     [Lastfm]
     username = username

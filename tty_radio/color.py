@@ -1,23 +1,36 @@
 from __future__ import print_function
-import time
 import os
 import sys
-from .settings import Settings
 
 THEME = {}  # initialized in main via load_theme
 
+
 def term_bg_is_dark():
-    """Return True if the terminal background is dark, False otherwise"""
-    fg, bg = os.environ.get('COLORFGBG', '0;15').split(";")
+    """Return True if the terminal background is dark, False otherwise.
+
+    This is based on the COLORFGBG environment variable, which is set by
+    rxvt and derivatives. This variable contains either two or three
+    values separated by semicolons; we want the last value in either
+    case. If this value is 0-6 or 8, our background is dark.
+
+    Raises:
+        KeyError: if COLORFGBG environment variable is not defined
+        ValueError: if COLORFGBG environment is malformed
+    """
+    bg = os.environ['COLORFGBG'].split(";")[-1]
     return (int(bg) == 8 or int(bg) <= 6)
 
 
 def load_theme(settings):
     theme_name = settings.config['UI']['theme']
     if theme_name == 'auto':
-        theme_name = 'light'
-        if term_bg_is_dark():
-            theme_name = 'miami_vice'
+        try:
+            if term_bg_is_dark():
+                theme_name = settings.config['UI']['dark_theme']
+            else:
+                theme_name = settings.config['UI']['light_theme']
+        except (KeyError, ValueError):
+            theme_name = settings.config['UI']['fallback_theme']
     try:
         theme = dict(settings.config['theme_' + theme_name])
     except KeyError:

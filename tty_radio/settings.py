@@ -13,6 +13,9 @@ class Settings(object):
         self.config = configparser.ConfigParser()
         self.config['UI'] = {
             'theme': 'auto',
+            'light_theme': 'light',
+            'dark_theme': 'miami_vice',
+            'fallback_theme': 'bw',
             'confirm_banner_font': 'no',
             'compact_titles': 'yes',  # only show last title in UI?
             'figlet_banners': 'yes',
@@ -48,6 +51,19 @@ class Settings(object):
             'meta_stream_name': 'blue',
             'meta_song_name': 'blue',
             'stream_exit_confirm': 'purple',
+        }
+        self.config['theme_bw'] = {
+            'ui_banner': 'endc',
+            'ui_names': 'endc',
+            'ui_desc': 'endc',
+            'stream_name_banner': 'endc',
+            'stream_name_confirm': 'endc',
+            'meta_prefix_str': '>>>',
+            'meta_prefix_pad': '1',
+            'meta_prefix': 'endc',
+            'meta_stream_name': 'endc',
+            'meta_song_name': 'endc',
+            'stream_exit_confirm': 'endc',
         }
         self.config['Lastfm'] = {
             'api key': 'b25b959554ed76058ac220b7b2e0a026',
