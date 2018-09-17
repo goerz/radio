@@ -4,15 +4,13 @@ import sys
 import json
 from time import sleep
 from threading import Thread
-from getopt import getopt, GetoptError
 import logging
 
 import click
 
 from .ui import ui as start_ui
 from .api import Server, Client, ApiConnError
-from .ui import term_wh
-from .color import colors, update_theme
+from .color import update_theme
 from .settings import Settings, _check_volume
 from .notify import NotifyClient, _render_song_str
 from .stream import Stream
