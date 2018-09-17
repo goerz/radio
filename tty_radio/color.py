@@ -4,6 +4,7 @@ import os
 import sys
 from .settings import Settings
 
+THEME = {}  # initialized in main via load_theme
 
 def term_bg_is_dark():
     """Return True if the terminal background is dark, False otherwise"""
@@ -11,39 +12,24 @@ def term_bg_is_dark():
     return (int(bg) == 8 or int(bg) <= 6)
 
 
-def set_theme_from_settings(settings=None):
-    if settings is None:
-        settings = Settings()
-    theme = settings.config['DEFAULT']['theme']
-    if theme == 'auto':
-        theme = 'light'
+def load_theme(settings):
+    theme_name = settings.config['UI']['theme']
+    if theme_name == 'auto':
+        theme_name = 'light'
         if term_bg_is_dark():
-            theme = 'miami_vice'
+            theme_name = 'miami_vice'
     try:
-        return dict(settings.config['theme_' + theme])
+        theme = dict(settings.config['theme_' + theme_name])
     except KeyError:
-        print("##############################################################")
-        print("ERROR")
-        print("No theme '%s' defined in the config file (%s)"
-              % (theme, settings.file))
-        print("")
-        print("The config file must contain a section 'theme_%s'" % theme)
-        print("See e.g. 'theme_light' in config (--show-config)")
-        print("")
-        print("Fallback to 'auto'")
-        print("##############################################################")
-        time.sleep(5)
-        if term_bg_is_dark():
-            return dict(settings.config['theme_miami_vice'])
-        else:
-            return dict(settings.config['theme_light'])
-
-
-THEME = set_theme_from_settings()
-
-
-def update_theme(settings):
-    theme = set_theme_from_settings(settings)
+        raise ValueError(
+            "No theme '%s' defined in the config file (%s): must contain "
+            "section 'theme_%s'" % (theme_name, settings.file, theme_name))
+    for (key, val) in theme.items():
+        if key not in ['meta_prefix_str', 'meta_prefix_pad']:
+            if val not in colors.COLORS:
+                raise ValueError(
+                    "Error in color theme '%s': invalid color '%s' for %s"
+                    % (theme_name, val, key))
     THEME.update(theme)
 
 

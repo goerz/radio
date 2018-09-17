@@ -10,7 +10,7 @@ import click
 
 from .ui import ui as start_ui
 from .api import Server, Client, ApiConnError
-from .color import update_theme
+from .color import load_theme
 from .settings import Settings, _check_volume
 from .notify import NotifyClient, _render_song_str
 from .stream import Stream
@@ -22,17 +22,16 @@ __version__ = '2.0.0'
 def main(do_ui, theme=None, vol=None, scrobble=None):
     try:
         settings = Settings(theme=theme, vol=vol, scrobble=scrobble)
+        Stream.vol = settings.config['Server']['volume']
+        if do_ui:
+            load_theme(settings)
     except (ValueError, TypeError) as exc_info:
         click.echo("Error in config: %s" % str(exc_info))
         sys.exit(1)
-    update_theme(settings)
-    Stream.vol = settings.config['DEFAULT']['volume']
-
-    s = None
 
     try:
         # is there a server running already?
-        Client().status()  # raises ApiConnError
+        Client().status()  # raises ApiConnError if no server running
         if not do_ui:
             click.echo("Server already running")
             sys.exit(1)
@@ -45,7 +44,11 @@ def main(do_ui, theme=None, vol=None, scrobble=None):
         server_thread.start()
         sleep(1.0)
         # run notify-client in background (always together with server)
-        notify_client = NotifyClient(settings)
+        try:
+            notify_client = NotifyClient(settings)
+        except ValueError as exc_info:
+            click.echo("Cannot start notify-thread: %s" % exc_info)
+            sys.exit(1)
         notify_thread = Thread(
             name='notify_client', target=notify_client.run)
         notify_thread.daemon = True
@@ -350,7 +353,7 @@ def volume(value, reset, format):
         status = client.status()
         if reset:
             settings = Settings()
-            value = _check_volume(settings.config['DEFAULT']['volume'])
+            value = _check_volume(settings.config['Server']['volume'])
             format = 'int'
         if value is not None:
             input_format = format

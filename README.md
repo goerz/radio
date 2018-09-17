@@ -40,15 +40,17 @@ This package wraps your favorite terminal based audio stream player (like mpg123
 
 `radio` reads settings from a config file in `~/.tty_radio-settings.ini`. The file is automatically created if it does not exist. Use `radio --show-config` to print the complete active config file.
 
-    [DEFAULT]
+    [UI]
     compact_titles = yes
-    volume = 11000
     figlet_banners = yes
     confirm_banner_font = no
-    scrobble = no
     theme = auto
+
+    [Server]
+    volume = 11000
     notify_logfile =
     update_btt_widget = no
+    scrobble = no
 
     [theme_miami_vice]
     stream_name_banner = yellow

@@ -11,15 +11,17 @@ SETTINGS_FILE = ".tty_radio-settings.ini"
 class Settings(object):
     def __init__(self, theme=None, vol=None, scrobble=None):
         self.config = configparser.ConfigParser()
-        self.config['DEFAULT'] = {
+        self.config['UI'] = {
             'theme': 'auto',
             'confirm_banner_font': 'no',
-            'scrobble': 'no',
-            'update_btt_widget': 'no',
-            'notify_logfile': '',
             'compact_titles': 'yes',  # only show last title in UI?
             'figlet_banners': 'yes',
+        }
+        self.config['Server'] = {
+            'scrobble': 'no',
+            'notify_logfile': '',
             'volume': '11000',
+            'update_btt_widget': 'no',
         }
         self.config['theme_miami_vice'] = {
             'ui_banner': 'red',
@@ -61,17 +63,17 @@ class Settings(object):
         self.file = path_join(home, SETTINGS_FILE)
         self.config.read([self.file])
         if theme is not None:
-            self.config['DEFAULT']['theme'] = theme
+            self.config['UI']['theme'] = theme
         if vol is not None:
-            self.config['DEFAULT']['volume'] = str(vol)
+            self.config['UI']['volume'] = str(vol)
         if scrobble is not None:
             if isinstance(scrobble, bool):
                 if scrobble:
                     scrobble = 'yes'
                 else:
                     scrobble = 'no'
-            self.config['DEFAULT']['scrobble'] = str(scrobble)
-        _check_volume(self.config['DEFAULT']['volume'])
+            self.config['Server']['scrobble'] = str(scrobble)
+        _check_volume(self.config['Server']['volume'])
         if not os.path.isfile(self.file):
             with open(self.file, 'w') as out_fh:
                 self.config.write(out_fh)

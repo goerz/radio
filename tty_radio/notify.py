@@ -22,7 +22,7 @@ class NotifyClient(object):
     Monitors the server for changes in the metadata that indicate the currently
     playing arist and song title.
 
-    If ``scrobble`` in the ``DEFAULT`` section of `settings` is activated, send
+    If ``scrobble`` in the ``Server`` section of `settings` is activated, send
     songs to the Last.fm service, using the credentials specified in the
     ``Lastfm`` section of `settings`.
 
@@ -30,17 +30,27 @@ class NotifyClient(object):
         settings (configparser.ConfigParser): config file settings
     """
     def __init__(self, settings):
-        self._scrobble = (
-            settings.config['DEFAULT'].getboolean('scrobble') and PYLAST)
-        self._update_btt = False
-        logfile = settings.config['DEFAULT']['notify_logfile']
+        try:
+            self._scrobble = (
+                settings.config['Server'].getboolean('scrobble') and PYLAST)
+        except ValueError as exc_info:
+            raise ValueError(
+                "Error in configuration, section '%s', key '%s': %s"
+                % ('Server', 'scrobble', exc_info))
+        logfile = settings.config['Server']['notify_logfile']
         if len(logfile) > 0:
             self._log_fh = open(expanduser(logfile), 'w')
         else:
             self._log_fh = None
         self._filters = ["Commercial-free", ]  # TODO: get this from config
-        if settings.config['DEFAULT'].getboolean('update_btt_widget'):
-            self._update_btt = True
+        try:
+            self._update_btt = (
+                settings.config['Server'].getboolean('update_btt_widget'))
+        except ValueError as exc_info:
+            raise ValueError(
+                "Error in configuration, section '%s', key '%s': %s"
+                % ('Server', 'update_btt_widget', exc_info))
+        if self._update_btt:
             self._btt_widget_uuid  = settings.config['BTT']['widget UUID']
             self._btt_shared_secret = settings.config['BTT']['shared secret']
             if self._btt_widget_uuid == '':
@@ -64,7 +74,7 @@ class NotifyClient(object):
         """Write a msg to the internal log file
 
         The log file is specified by ``notify_client_logfile`` in the
-        ``DEFAULT`` section of the config file settings. If this setting is
+        ``Server`` section of the config file settings. If this setting is
         blank, the log `msg` is silently discarded.
 
         Args:

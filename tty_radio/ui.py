@@ -201,7 +201,15 @@ def ui_loop(client, settings, station='favs'):
     # ######
     # print stations
     (term_w, term_h) = term_wh()
-    use_pyfiglet = settings.config['DEFAULT'].getboolean('figlet_banners')
+    try:
+        use_pyfiglet = settings.config['UI'].getboolean('figlet_banners')
+    except ValueError:
+        use_pyfiglet = False
+    try:
+        confirm_banner_font = (
+            settings.config['UI'].getboolean('confirm_banner_font'))
+    except ValueError:
+        confirm_banner_font = False
     banner_txt = deets['ui_name'] + ' Tuner'
     with colors(THEME['ui_banner']):
         (banner, font) = bannerize(
@@ -233,10 +241,9 @@ def ui_loop(client, settings, station='favs'):
         return station
     display_album(stream['art'])
     display_banner(
-        stream['name'],
-        confirm=settings.config['DEFAULT'].getboolean('confirm_banner_font'),
+        stream['name'], confirm=confirm_banner_font,
         use_pyfiglet=use_pyfiglet)
-    compact_titles = settings.config['DEFAULT'].getboolean('compact_titles')
+    compact_titles = settings.config['UI'].getboolean('compact_titles')
     # this play->pause->play loop should never accumulate lines
     # in the output (except for the first Enter they press
     # at a prompt and even then, it's just an empty line)
@@ -295,7 +302,10 @@ def display_metadata(client, stream, settings):
     #   without conflicting audio:
     #   mpg123 -f 0 -C -@ <url>
     c = client
-    compact_titles = settings.config['DEFAULT'].getboolean('compact_titles')
+    try:
+        compact_titles = settings.config['UI'].getboolean('compact_titles')
+    except ValueError:
+        compact_titles = False
     station_name = stream['station']
     stream_name = stream['name']
     if compact_titles:
