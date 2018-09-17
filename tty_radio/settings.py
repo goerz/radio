@@ -9,7 +9,7 @@ SETTINGS_FILE = ".tty_radio-settings.ini"
 
 
 class Settings(object):
-    def __init__(self, theme=None):
+    def __init__(self, theme=None, vol=None):
         self.config = configparser.ConfigParser()
         self.config['DEFAULT'] = {
             'theme': 'auto',
@@ -17,6 +17,7 @@ class Settings(object):
             'scrobble': 'no',
             'update_btt_widget': '',
             'notify_logfile': '',
+            'volume': '11000',
         }
         self.config['theme_miami_vice'] = {
             'ui_banner': 'red',
@@ -55,6 +56,21 @@ class Settings(object):
         self.config.read([self.file])
         if theme is not None:
             self.config['DEFAULT']['theme'] = theme
+        if vol is not None:
+            self.config['DEFAULT']['volume'] = vol
+        _check_volume(self.config['DEFAULT']['volume'])
         if not os.path.isfile(self.file):
             with open(self.file, 'w') as out_fh:
                 self.config.write(out_fh)
+
+
+def _check_volume(value):
+    try:
+        if 0 <= int(value) <= 32000:
+            return value
+        else:
+            raise ValueError(
+                "Invalid volume %s must be between 0 and 32000" % value)
+    except (ValueError, TypeError):
+        raise ValueError(
+            "Invalid volume %s must be integer between 0 and 32000" % value)

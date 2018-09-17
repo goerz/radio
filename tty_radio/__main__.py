@@ -13,17 +13,22 @@ from .ui import ui as start_ui
 from .api import Server, Client, ApiConnError
 from .ui import term_wh
 from .color import colors, update_theme
-from .settings import Settings
+from .settings import Settings, _check_volume
 from .notify import NotifyClient, _render_song_str
+from .stream import Stream
 
 
 __version__ = '2.0.0'
 
 
-def main(do_ui, theme=None):
-    settings = Settings(theme=theme)
+def main(do_ui, theme=None, vol=None):
+    try:
+        settings = Settings(theme=theme, vol=vol)
+    except ValueError as exc_info:
+        click.echo("Error in config: %s" % str(exc_info))
+        sys.exit(1)
     update_theme(settings)
-
+    Stream.vol = settings.config['DEFAULT']['volume']
     notify_client = NotifyClient(settings)
     notify_thread = Thread(
         name='notify_client', target=notify_client.run)
@@ -32,7 +37,7 @@ def main(do_ui, theme=None):
 
     try:
         # is there a server running already?
-        Client().status()  # raises APiConnError
+        Client().status()  # raises ApiConnError
         if not do_ui:
             click.echo("Server already running")
             sys.exit(1)
@@ -51,6 +56,19 @@ def main(do_ui, theme=None):
             sys.exit(0)
     if do_ui:
         start_ui(settings)
+
+
+
+
+def _get_volume_input_format(value):
+    if value.endswith('%'):
+        return 'percent'
+    elif 0 <= float(value) <= 1.0:
+        return 'float'
+    elif 0 <= float(value) <= 100:
+        return 'percent'
+    else:
+        return 'int'
 
 
 def print_config(ctx, param, value):
@@ -96,7 +114,9 @@ def radio(ctx, debug):
     -------------------------
 
     The interactive terminal user interface is shown if `radio` is run without
-    arguments, or with the `ui` command (`radio ui`).
+    arguments, or with the `ui` command (`radio ui`, which accepts additional
+    options).
+
     Select station at prompt, by entering number found in left column
 
     The web UI can be accessed at http://localhost:7887.
@@ -132,18 +152,24 @@ def radio(ctx, debug):
 
 
 @radio.command()
-def server():
+@click.option(
+    '--vol', metavar='INT',
+    help="Volume value 0..32k. Overrides setting in config file.")
+def server(vol):
     """Run server without interactive terminal UI."""
-    main(do_ui=False)
+    main(do_ui=False, vol=vol)
 
 
 @click.option(
     '--theme', metavar='NAME',
     help="Name of theme to use. Overrides setting in config file.")
+@click.option(
+    '--vol', metavar='INT',
+    help="Volume value 0..32k. Overrides setting in config file.")
 @radio.command()
-def ui(theme):
+def ui(theme, vol):
     """Run server with interactive terminal UI."""
-    main(do_ui=True, theme=theme)
+    main(do_ui=True, theme=theme, vol=vol)
 
 
 @radio.command()
@@ -264,9 +290,9 @@ def stations():
         sys.exit(1)
 
 
-@radio.command()
 @click.option(
     '--stop', is_flag=True, help='stop, instead of pause')
+@radio.command()
 def toggle(stop):
     """Toggle between play/pause."""
     try:
@@ -282,6 +308,74 @@ def toggle(stop):
                 client.stop()
             else:
                 client.pause()
+    except ApiConnError:
+        click.echo("Cannot connect to server")
+        sys.exit(1)
+
+
+@radio.command()
+@click.option(
+    '--value', metavar='VALUE',
+    help='Volume value. An integer 0..32k, a float 0..1.0, or an '
+    'integer 0..100 (with an optional trailing percentage sign), '
+    'depending on the value of --format')
+@click.option(
+    '--reset', is_flag=True,
+    help="Reset the volume to the value in the config file.")
+@click.option(
+    '--format', type=click.Choice(['float', 'int', 'percent']),
+    help="Format in which to print volume, or in which to parse --value")
+def volume(value, reset, format):
+    """Show or adjust the volume.
+
+    If called without arguments, print the current volume and exit. The volume
+    can be changed by passing a --value, or --reset. Changing the volume stops
+    and re-starts any active stream.
+
+    If --format is not specified, the format of --value will be autodetected
+    """
+    try:
+        client = Client()
+        status = client.status()
+        if reset:
+            settings = Settings()
+            value = _check_volume(settings.config['DEFAULT']['volume'])
+            format = 'int'
+        if value is not None:
+            input_format = format
+            if input_format is None:
+                try:
+                    input_format = _get_volume_input_format(value)
+                except (ValueError, TypeError):
+                    click.echo("Invalid value: %s" % value)
+                    sys.exit(1)
+            if input_format == 'float':
+                value = int(float(value) * 32000)
+            elif input_format == 'percent':
+                if value.endswith('%'):
+                    value = value[:-1]
+                value = int(float(value) * 320)
+            if value != status['volume']:
+                client.volume(value)
+                if status['currently_streaming']:
+                    client.stop()
+                    client.play()
+                status = client.status()
+        value = status['volume']
+        float_str = str(float(value)/32000.0)
+        int_str = str(int(value))
+        percent_str = str(int(float(value)/320)) + "%"
+        if reset:
+            format = None
+        if format == 'float':
+            value_str = float_str
+        elif format == 'int':
+            value_str = int_str
+        elif format == 'percent':
+            value_str = percent_str
+        else:
+            value_str = "%s / %s / %s" % (int_str, float_str, percent_str)
+        click.echo(value_str)
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)

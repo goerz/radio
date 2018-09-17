@@ -17,6 +17,7 @@ else:
     from urllib import unquote
 
 from .radio import Radio
+from .stream import Stream
 
 
 BOTTLE_DEBUG = False
@@ -80,6 +81,7 @@ class Server(object):
         route('/api/v1.1/player')(self.status)
         post('/api/v1.1/player')(self.play)
         post('/api/v1.1/player/<station>/<stream>')(self.play)
+        post('/api/v1.1/volume/<value>')(self.volume)
         put('/api/v1.1/player')(self.pause)
         delete('/api/v1.1/player')(self.stop)
         run(host=self.host, port=self.port,
@@ -118,7 +120,8 @@ class Server(object):
             'paused': self.radio.is_paused,
             'station': self.radio.station,
             'stream': self.radio.stream,
-            'song': self.radio.song
+            'song': self.radio.song,
+            'volume': Stream.vol,
         }
         return json.dumps({'success': success, 'resp': resp}) + '\n'
 
@@ -246,6 +249,22 @@ class Server(object):
             resp = 'Failure: could not play'
         return json.dumps({'success': success, 'resp': resp}) + '\n'
 
+    def volume(self, value):
+        val_ok = False
+        try:
+            if 0 <= int(value) <= 32000:
+                val_ok = True
+        except (ValueError, TypeError):
+            pass
+        if val_ok:
+            Stream.vol = str(value)
+            success = True
+            resp = 'Setting volume to %s' % (Stream.vol, )
+        else:
+            success = False
+            resp = 'Invalid volume %s. Must be integer 0..32k.' % value
+        return json.dumps({'success': success, 'resp': resp}) + '\n'
+
     def pause(self):
         (station, stream) = self.radio.pause()
         success = True
@@ -364,6 +383,14 @@ class Client(object):
         url = 'player'
         if station is not None and stream is not None:
             url = 'player/%s/%s' % (station, stream)
+        rjson = self.post(url)
+        if rjson is None or not rjson['success']:
+            print('API request failure: %s' % rjson)
+            return False
+        return True
+
+    def volume(self, value):
+        url = 'volume/%s' % value
         rjson = self.post(url)
         if rjson is None or not rjson['success']:
             print('API request failure: %s' % rjson)

@@ -1,7 +1,5 @@
 DEBUG = False
 
-VOL = "11000"  # volume 0 .. 32k
-
 # If true, then station will only show most recent song title
 COMPACT_TITLES = True
 """

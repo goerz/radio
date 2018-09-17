@@ -9,10 +9,11 @@ from subprocess import (
     CalledProcessError)
 import re
 
-from . import VOL
-
 
 class Stream(object):
+
+    vol = "11000"  # volume 0 .. 32k
+
     def __init__(self, station, name, url, desc, art, reader):
         self.station = station
         self.name = name
@@ -133,7 +134,7 @@ def mpg123(url, get_p, stream_reader):
     # -C allows keyboard presses to send commands:
     #    space is pause/resume, q is quit, +/- control volume
     # -@ tells it to read (for stream/playlist info) filenames/URLs from url
-    subp_cmd = ["mpg123", "-f", VOL, "-@", url]
+    subp_cmd = ["mpg123", "-f", Stream.vol, "-@", url]
     try:
         p = Popen(subp_cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     except OSError as e:
