@@ -6,10 +6,11 @@ from os.path import (
 import configparser
 
 SETTINGS_FILE = ".tty_radio-settings.ini"
+# if you change SETTINGS_FILE, make sure to update the documentation
 
 
 class Settings(object):
-    def __init__(self, theme=None, vol=None, scrobble=None):
+    def __init__(self, read_file=True, theme=None, vol=None, scrobble=None):
         self.config = configparser.ConfigParser()
         self.config['UI'] = {
             'theme': 'auto',
@@ -77,7 +78,8 @@ class Settings(object):
         }
         home = expanduser('~')
         self.file = path_join(home, SETTINGS_FILE)
-        self.config.read([self.file])
+        if read_file:
+            self.config.read([self.file])
         if theme is not None:
             self.config['UI']['theme'] = theme
         if vol is not None:

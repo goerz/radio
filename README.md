@@ -38,72 +38,7 @@ This package wraps your favorite terminal based audio stream player (like mpg123
 
 ## Config file
 
-`radio` reads settings from a config file in `~/.tty_radio-settings.ini`. The file is automatically created if it does not exist. Use `radio --show-config` to print the complete active config file.
-
-    [UI]
-    compact_titles = yes
-    figlet_banners = yes
-    confirm_banner_font = no
-    theme = auto
-    light_theme = light
-    fallback_theme = bw
-    dark_theme = miami_vice
-
-    [Server]
-    volume = 11000
-    notify_logfile =
-    update_btt_widget = no
-    scrobble = no
-
-    [theme_miami_vice]
-    stream_name_banner = yellow
-    ui_banner = red
-    meta_song_name = blue
-    stream_exit_confirm = purple
-    meta_prefix = blue
-    stream_name_confirm = purple
-    meta_prefix_str = >>>
-    meta_stream_name = blue
-    ui_desc = green
-    meta_prefix_pad = 1
-    ui_names = yellow
-
-    [theme_light]
-    stream_name_banner = grey
-    ui_banner = purple
-    meta_song_name = blue
-    stream_exit_confirm = purple
-    meta_prefix = blue
-    stream_name_confirm = purple
-    meta_prefix_str = >>>
-    meta_stream_name = blue
-    ui_desc = grey
-    meta_prefix_pad = 1
-    ui_names = blue
-
-    [theme_bw]
-    ui_banner = endc
-    meta_prefix_pad = 1
-    meta_song_name = endc
-    stream_name_banner = endc
-    meta_stream_name = endc
-    meta_prefix = endc
-    ui_names = endc
-    stream_name_confirm = endc
-    stream_exit_confirm = endc
-    meta_prefix_str = >>>
-    ui_desc = endc
-
-    [Lastfm]
-    username = username
-    api key = b25b959554ed76058ac220b7b2e0a026
-    shared secret = 425b55975eed76058ac220b7b4e8a054
-    password hash = 25b5192f9943196a6044ca1b6b1d30c2
-
-    [BTT]
-    widget UUID =
-    shared secret =
-
+`radio` reads settings from a config file in `~/.tty_radio-settings.ini`. The file is automatically created if it does not exist. See `radio config --help` for details.
 
 
 ## Dependencies

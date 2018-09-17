@@ -1,7 +1,7 @@
 v2.0.0
 ======
 
-* New stateless command line interface ("scripting interface"): `radio play`, `radio pause`, `radio stop`, `radio toggle`, `radio station`, `radio status` commands (new dependency: `click`)
+* New stateless command line interface ("scripting interface"): `radio play`, `radio pause`, `radio stop`, `radio toggle`, `radio station`, `radio status`, `radio config` commands (new dependency: `click`)
 * Add support for scrobbling to Last.fm (requires `pylast` package and an API key)
 * Add support for updating BetterTouchTool Macbook touchbar widgets with the currently playing song information
 * New config file in ~/.tty_radio-settings.ini to control settings of the terminal UI (e.g. color themes) and scrobbling/notification support

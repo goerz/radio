@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import os
 import sys
 import json
 from time import sleep
+from shutil import copyfile
 from threading import Thread
 import logging
 
@@ -77,14 +79,6 @@ def _get_volume_input_format(value):
         return 'int'
 
 
-def print_config(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    settings = Settings()
-    settings.config.write(sys.stdout)
-    ctx.exit()
-
-
 class AliasedGroup(click.Group):
 
     def get_command(self, ctx, cmd_name):
@@ -108,10 +102,6 @@ class AliasedGroup(click.Group):
 @click.option(
     '--debug', is_flag=True,
     help='Enable debug logging')
-@click.option(
-    '--show-config', is_flag=True, callback=print_config,
-    expose_value=False, is_eager=True,
-    help='Show the active configuration ')
 @click.pass_context
 def radio(ctx, debug):
     """
@@ -145,8 +135,7 @@ def radio(ctx, debug):
 
     The program reads settings from the ~/.tty_radio-settings.ini config file.
     If this file does not exist, it will be created with the default settings.
-    A complete config file with all currently active settings can be obtained
-    via the `--show-config` option.
+    See `radio config --help` for details.
     """
     logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger(__name__)
@@ -393,3 +382,125 @@ def volume(value, reset, format):
     except ApiConnError:
         click.echo("Cannot connect to server")
         sys.exit(1)
+
+
+@radio.command()
+@click.option(
+    '--write', is_flag=True,
+    help='Overwrite `~/.tty_radio-settings.ini` with the complete current '
+    'configuration.')
+@click.option(
+    '--backup/--no-backup', default=True,
+    help='In conjunction with --write, keep a backup of an existing config '
+    'file in `~/.tty_radio-settings.ini~`')
+@click.option(
+    '--default', is_flag=True,
+    help='Print or write the default, as opposed to the current '
+    'configuration.')
+def config(write, default, backup):
+    """Print the complete current configuration
+
+    \b
+    The configuration may include the following settings:
+
+        \b
+        [UI]                          # Settings for the terminal UI
+        compact_titles = yes          # Only show the most current songtitle?
+        theme = auto                  # Colortheme (auto: choose automatically)
+        light_theme = light           # 'auto' colortheme for light term bg
+        dark_theme = miami_vice       # 'auto' colortheme for dark term bg
+        fallback_theme = bw           # 'auto' colortheme for unknown term bg
+        figlet_banners = yes          # Use figlet ascii-art banners?
+        confirm_banner_font = no      # ask about figlet banner font-choice?
+
+        \b
+        [Server]                      # Settings for the server
+        scrobble = no                 # Send srobbles to Last.fm?
+        notify_logfile =              # Log file for srobbles/notifications
+        update_btt_widget = no        # Update any BetterTouchTool widget?
+        volume = 11000                # The default volume (0..32k)
+
+        \b
+        [theme_miami_vice]            # Settings for colortheme 'miami_vice'
+        stream_name_banner = yellow
+        ui_names = yellow
+        stream_name_confirm = purple
+        meta_stream_name = blue
+        meta_prefix_str = >>>
+        ui_desc = green
+        meta_song_name = blue
+        stream_exit_confirm = purple
+        ui_banner = red
+        meta_prefix_pad = 1
+        meta_prefix = blue
+
+        \b
+        [theme_light]                 # Settings for colortheme 'light'
+        stream_name_banner = grey
+        ui_names = blue
+        stream_name_confirm = purple
+        meta_stream_name = blue
+        meta_prefix_str = >>>
+        ui_desc = grey
+        meta_song_name = blue
+        stream_exit_confirm = purple
+        ui_banner = purple
+        meta_prefix_pad = 1
+        meta_prefix = blue
+
+        \b
+        [theme_bw]                    # Settings for colortheme 'bw'
+        stream_name_banner = endc     # 'endc' means 'no color'
+        ui_names = endc
+        stream_name_confirm = endc
+        meta_stream_name = endc
+        meta_prefix_str = >>>
+        ui_desc = endc
+        meta_song_name = endc
+        stream_exit_confirm = endc
+        ui_banner = endc
+        meta_prefix_pad = 1
+        meta_prefix = endc
+
+        \b
+        [Lastfm]                      # Settings for Last.fm API server
+        api key =                     # API key
+        shared secret =               # API shared secret
+        username =                    # Last.fm username
+        password hash =               # md5 hash of Last.fm password
+
+        \b
+        [BTT]                         # BetterTouchTool notification settings
+        shared secret =               # BTT secret
+        widget uuid =                 # UUID of widget to update
+
+    Notes:
+
+        * You must register at https://www.last.fm/api/account/create to get
+          the Last.fm API key and shared secret.
+
+        * The Last.fm password hash should be optained with the Python command
+          `import pylast; pylast.md5("your_password")`
+
+        * The BTT shared secret is an optional setting in the "Advanced
+          Settings" in BetterTouchTool ("General" tab)
+
+        * The BTT widget uuid can be optained in BetterTouchTool by
+          right-clicking on the widget and choosing "Copy UUID"
+
+    See the README for more details.
+    """
+    settings = Settings(read_file=(not default))
+    if write:
+        if os.path.isfile(settings.file):
+            if backup:
+                backup_file = settings.file + '~'
+                i = 0
+                while os.path.isfile(backup_file):
+                    i += 1
+                    backup_file = settings.file + '~%d' % i
+                copyfile(settings.file, backup_file)
+        with open(settings.file, 'w') as out_fh:
+            settings.config.write(out_fh)
+    else:
+        settings.config.write(sys.stdout)
