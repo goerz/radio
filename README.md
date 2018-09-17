@@ -133,7 +133,7 @@ In BetterTouchTool, [make sure Touch Bar support is enabled](https://docs.better
 
 * use "Name" `tty_radio`, Launch Path `/bin/bash/`, Parameter `-c` and the following script:
 
-        export  LC_ALL=en_US.UTF-8
+        export LC_ALL=en_US.UTF-8
         export LANG=en_US.UTF-8
         export LANG=en_US.UTF-8
         export LC_CTYPE=en_US.UTF-8
@@ -147,7 +147,7 @@ In BetterTouchTool, [make sure Touch Bar support is enabled](https://docs.better
 
 * Choose "Execute Shell Script / Task" as the action for the widget, and use the following script:
 
-        export  LC_ALL=en_US.UTF-8
+        export LC_ALL=en_US.UTF-8
         export LANG=en_US.UTF-8
         export LANG=en_US.UTF-8
         export LC_CTYPE=en_US.UTF-8
@@ -170,3 +170,25 @@ In BetterTouchTool, [make sure Touch Bar support is enabled](https://docs.better
     Again, the logfile is optional, but is useful for debugging.
 
 The `tty_radio` server will now instantly update the touch bar widget whenever the song information changes in the stream metadata, or if a stream is paused/stopped/started.
+
+
+## Controlling playback with LaunchBar
+
+To augment the touch-bar mini-client described above (which can only do play/pause), you could set up [LaunchBar](https://www.obdev.at/products/launchbar/index.html) to issue commands to a running `tty_radio` server.
+
+* In LaunchBar, start the "Action Editor", create "New Action", choose an appropriate name
+* In the "Scripts" tab of the action, select "Shell Script", and check "Run in background", "Requires Argument", and "Accepts string arguments"
+* Click on "Edit", and add the following script:
+
+        #!/bin/bash
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LC_CTYPE=en_US.UTF-8
+        /full/path/to/radio $@
+
+    Again, make sure to use the full path to `radio`
+
+You now have a "radio" action in LaunchBar, and pressing enter on it allows to type in a sub-command, e.g. "play folk" or "tog" (these are equivalent to `radio play folk` and `radio toggle` in a terminal).
+
+A similar approach should work for other app launchers (Alfred, Butler, QuickSilver, ...)
