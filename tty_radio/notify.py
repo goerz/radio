@@ -39,27 +39,20 @@ class NotifyClient(object):
             self._log_fh = open(expanduser(logfile), 'w')
         else:
             self._log_fh = None
-        self._filters = ["Commercial-free", ]
+        self._filters = ["Commercial-free", ]  # TODO: get this from config
         if self._scrobble:
-            api_key = settings.config['Lastfm']['api key']
-            api_secret = settings.config['Lastfm']['shared secret']
-            username = settings.config['Lastfm']['username']
-            password_hash = settings.config['Lastfm']['password hash']
-            self.log("Scrobble API_KEY: %s" % api_key)
-            self.log("Scrobble api_secret: %s" % api_secret)
-            self.log("Last.fm username: %s" % username)
-            self.log("Last.fm password_hash: %s" % password_hash)
-            try:
-                self._lastfm_network = pylast.LastFMNetwork(
-                    api_key=api_key, api_secret=api_secret,
-                    username=username, password_hash=password_hash)
-                self.client = Client()
-            except pylast.WSError as exc_info:
-                self._scrobble = False
-                self.log("ERROR connecting to Last.fm:")
-                self.log("    " + str(exc_info), timestamp=False)
-                self.log("    Check your credentials", timestamp=False)
+            self._lastfm_api_key = settings.config['Lastfm']['api key']
+            self._lastfm_api_secret = settings.config['Lastfm']['shared secret']
+            self._lastfm_username = settings.config['Lastfm']['username']
+            self._lastfm_password_hash = settings.config['Lastfm']['password hash']
+            self.log("Scrobble API_KEY: %s" % self._lastfm_api_key)
+            self.log("Scrobble api_secret: %s" % self._lastfm_api_secret)
+            self.log("Last.fm username: %s" % self._lastfm_username)
+            self.log("Last.fm password_hash: %s" % self._lastfm_password_hash)
+            self._lastfm_network = None  # set by _authenticate_lastfm
+            self._authenticate_lastfm()
             self._scrobbles = []
+        self.client = Client()
 
     def log(self, msg, timestamp=True):
         """Write a msg to the internal log file
@@ -85,6 +78,27 @@ class NotifyClient(object):
                 self._log_fh.write(
                     "%s\n" % (msg.replace("\n", " ").strip()))
             self._log_fh.flush()
+
+    def _authenticate_lastfm(self):
+            if isinstance(self._lastfm_network, pylast.LastFMNetwork):
+                return  # already authenticated
+            try:
+                self._lastfm_network = pylast.LastFMNetwork(
+                    api_key=self._lastfm_api_key,
+                    api_secret=self._lastfm_api_secret,
+                    username=self._lastfm_username,
+                    password_hash=self._lastfm_password_hash)
+                self.log(
+                    "Authenticated Last.fm: %s" % str(self._lastfm_network))
+            except pylast.WSError as exc_info:
+                self._scrobble = False  # give up permanently
+                self.log("ERROR connecting to Last.fm:")
+                self.log("    " + str(exc_info), timestamp=False)
+                self.log("    Check your credentials", timestamp=False)
+            except pylast.NetworkError as exc_info:
+                self.log("ERROR connecting to Last.fm:")
+                self.log("    " + str(exc_info), timestamp=False)
+                self.log("    No network connection", timestamp=False)
 
     def run(self):
         """Run the event loop
@@ -156,7 +170,7 @@ class NotifyClient(object):
         """Send a scrobble to Last.fm
 
         Assuming srobbling is active in the config file settings, send the
-        given `arist`/`title` to Last.fm
+        given `artist`/`title` to Last.fm
 
         Args:
             artist (str): artist to submit in scrobble
@@ -165,6 +179,7 @@ class NotifyClient(object):
                 scrobble
         """
         if self._scrobble:
+            self._authenticate_lastfm()
             try:
                 prev_artist, prev_title = self._scrobbles[-1]
                 if artist == prev_artist and title == prev_title:
@@ -177,7 +192,12 @@ class NotifyClient(object):
                     artist, title,
                     time.strftime(
                         '%Y-%m-%d %H:%M:%S', time.localtime(int(timestamp)))))
-            self._lastfm_network.scrobble(artist, title, int(timestamp))
+            try:
+                self._lastfm_network.scrobble(artist, title, int(timestamp))
+            except pylast.NetworkError as exc_info:
+                self.log(
+                    "Failed to scrobble %s - %s: %s"
+                    % (artist, title, str(exc_info)))
             self._scrobbles.append([artist, title])
 
     def _get_artist_title(self, status):
