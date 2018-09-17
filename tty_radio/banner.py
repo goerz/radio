@@ -41,14 +41,14 @@ def rand_font():
     return "none"
 
 
-def bannerize(str, term_w):
+def bannerize(str, term_w, use_pyfiglet=True):
     # do 100 attempts to find a suitable font
     # criteria:
     #   must be narrower than term window
     #   wider than 1/4 the term window(the larger, the prettier)
     out = "\n" + str + "\n" + '-' * len(str) + "\n"
     fi = "none"
-    if not PYFIG:
+    if not PYFIG or not use_pyfiglet:
         return (out, fi)
     for i in range(100):
         fi = rand_font()

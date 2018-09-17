@@ -18,6 +18,7 @@ class Settings(object):
             'update_btt_widget': '',
             'notify_logfile': '',
             'compact_titles': 'yes',  # only show last title in UI?
+            'figlet_banners': 'yes',
             'volume': '11000',
         }
         self.config['theme_miami_vice'] = {

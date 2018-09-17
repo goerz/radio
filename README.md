@@ -43,6 +43,7 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     [DEFAULT]
     compact_titles = yes
     volume = 11000
+    figlet_banners = yes
     confirm_banner_font = no
     scrobble = no
     theme = auto

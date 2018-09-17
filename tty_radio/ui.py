@@ -201,9 +201,11 @@ def ui_loop(client, settings, station='favs'):
     # ######
     # print stations
     (term_w, term_h) = term_wh()
+    use_pyfiglet = settings.config['DEFAULT'].getboolean('figlet_banners')
     banner_txt = deets['ui_name'] + ' Tuner'
     with colors(THEME['ui_banner']):
-        (banner, font) = bannerize(banner_txt, term_w)
+        (banner, font) = bannerize(
+            banner_txt, term_w, use_pyfiglet=use_pyfiglet)
         b_IO = StringIO(banner)
         b_h = len(b_IO.readlines())
         print(banner)
@@ -232,7 +234,8 @@ def ui_loop(client, settings, station='favs'):
     display_album(stream['art'])
     display_banner(
         stream['name'],
-        confirm=settings.config['DEFAULT'].getboolean('confirm_banner_font'))
+        confirm=settings.config['DEFAULT'].getboolean('confirm_banner_font'),
+        use_pyfiglet=use_pyfiglet)
     compact_titles = settings.config['DEFAULT'].getboolean('compact_titles')
     # this play->pause->play loop should never accumulate lines
     # in the output (except for the first Enter they press
@@ -415,13 +418,13 @@ def display_album(art_url):
     print(art)
 
 
-def display_banner(stream_name, confirm=False):
+def display_banner(stream_name, confirm=False, use_pyfiglet=True):
     unhappy = True
     while unhappy:
         (term_w, term_h) = term_wh()
         font = "unknown"
         with colors(THEME['stream_name_banner']):
-            (banner, font) = bannerize(stream_name, term_w)
+            (banner, font) = bannerize(stream_name, term_w, use_pyfiglet)
             b_IO = StringIO(banner)
             b_height = len(b_IO.readlines())
             if term_h > (b_height + 3):  # Playing, Station Name, Song Title
