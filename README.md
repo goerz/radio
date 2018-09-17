@@ -16,7 +16,7 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     * `pip install pillow`
 * Optionally, if you want to scrobble artists and song titles to Last.fm
     * `pip install pylast`
-* `pip install tty_radio`
+* `pip install git+git://github.com/goerz/radio.git@master#egg=tty_radio`
     * This adds `radio` to your path
 
 ## Usage
