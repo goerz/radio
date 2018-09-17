@@ -116,6 +116,57 @@ Lastly, activate scrobbling in the `Server` section of the config file:
 
     [Server]
     scrobble = yes
-    notify_logfile = ~/.tty_radio-scrobble.log
+    notify_logfile = ~/.tty_radio-notify.log
 
 The `notify_logfile` is optional, and may be useful for debugging.
+
+
+## Showing "currently playing" on a Macbook Touch Bar
+
+The [BetterTouchTool app](https://folivora.ai) allows to [customize the touch bar](http://vas3k.com/blog/touchbar/) on a recent Macbook Pro.  This makes it possible to implement a "mini-client" for `tty_radio`.
+
+In BetterTouchTool, [make sure Touch Bar support is enabled](https://docs.bettertouchtool.net/docs/touch_bar_basics.html). Then
+
+* add a new "Widget/Gesture"
+
+* in "Select Widget", choose "Run Shell Script and Show Return Value"
+
+* use "Name" `tty_radio`, Launch Path `/bin/bash/`, Parameter `-c` and the following script:
+
+        export  LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LC_CTYPE=en_US.UTF-8
+        /full/path/to/radio status --song --stream --quiet
+
+    Make sure to use the full path to the `radio` executable.
+
+* Set the script to execute every 100 seconds (the maximum): The script is actually only a fallback, the `tty_server` knows how to push to the widget once it exists.
+
+* In "Appearance & Settings", set the "Font Size" to 12 (smaller than the default to allow for two lines of text)
+
+* Choose "Execute Shell Script / Task" as the action for the widget, and use the following script:
+
+        export  LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LC_CTYPE=en_US.UTF-8
+        /full/path/to/radio toggle
+
+* Right-click on the newly created widget and "Copy UUID"
+* In the BetterTouchTool advanced settings, "General", check "Allow external BetterTouchTool Scripting" and enter a long random string in "Shared Secret for Scripting"
+* In the `tty_radio` config file, fill out the `BBT` section with the UUID and shared secret:
+
+        [BTT]
+        shared secret = 0hvrh1aiv1ohn9ozl8eaJeh
+        widget uuid = 41CCC8F1-6DA6-45F2-8BDD-FA86A58E01E3
+
+* Lastly, activate updating the widget in the config file:
+
+        [Server]
+        update_btt_widget = yes
+        notify_logfile = ~/.tty_radio-notify.log
+
+    Again, the logfile is optional, but is useful for debugging.
+
+The `tty_radio` server will now instantly update the touch bar widget whenever the song information changes in the stream metadata, or if a stream is paused/stopped/started.
