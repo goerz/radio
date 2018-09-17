@@ -19,10 +19,10 @@ from .stream import Stream
 __version__ = '2.0.0'
 
 
-def main(do_ui, theme=None, vol=None):
+def main(do_ui, theme=None, vol=None, scrobble=None):
     try:
-        settings = Settings(theme=theme, vol=vol)
-    except ValueError as exc_info:
+        settings = Settings(theme=theme, vol=vol, scrobble=scrobble)
+    except (ValueError, TypeError) as exc_info:
         click.echo("Error in config: %s" % str(exc_info))
         sys.exit(1)
     update_theme(settings)
@@ -159,9 +159,13 @@ def radio(ctx, debug):
 @click.option(
     '--vol', metavar='INT',
     help="Volume value 0..32k. Overrides setting in config file.")
-def server(vol):
+@click.option(
+    '--scrobble/--no-scrobble', default=None,
+    help="Activate or de-activate Last.fm scrobbling, overriding the "
+    "value in the config file.")
+def server(vol, scrobble):
     """Run server without interactive terminal UI."""
-    main(do_ui=False, vol=vol)
+    main(do_ui=False, vol=vol, scrobble=scrobble)
 
 
 @click.option(
@@ -170,10 +174,14 @@ def server(vol):
 @click.option(
     '--vol', metavar='INT',
     help="Volume value 0..32k. Overrides setting in config file.")
+@click.option(
+    '--scrobble/--no-scrobble', default=None,
+    help="Activate or de-activate Last.fm scrobbling, overriding the "
+    "value in the config file.")
 @radio.command()
-def ui(theme, vol):
+def ui(theme, vol, scrobble):
     """Run server with interactive terminal UI."""
-    main(do_ui=True, theme=theme, vol=vol)
+    main(do_ui=True, theme=theme, vol=vol, scrobble=scrobble)
 
 
 @radio.command()
