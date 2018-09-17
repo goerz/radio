@@ -66,10 +66,10 @@ class Settings(object):
             'stream_exit_confirm': 'endc',
         }
         self.config['Lastfm'] = {
-            'api key': 'b25b959554ed76058ac220b7b2e0a026',
-            'shared secret': '425b55975eed76058ac220b7b4e8a054',
-            'username': 'username',
-            'password hash': '25b5192f9943196a6044ca1b6b1d30c2',
+            'api key': '',
+            'shared secret': '',
+            'username': '',
+            'password hash': '',
         }
         self.config['BTT'] = {
             'widget UUID': '',
