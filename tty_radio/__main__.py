@@ -29,7 +29,6 @@ def main(do_ui, theme=None, vol=None, scrobble=None):
     Stream.vol = settings.config['DEFAULT']['volume']
 
     s = None
-    run_server_in_fg = False
 
     try:
         # is there a server running already?
@@ -40,27 +39,27 @@ def main(do_ui, theme=None, vol=None, scrobble=None):
     except ApiConnError:
         # no server running ...
         s = Server()
-        if do_ui:
-            # ... start server in background thread
-            st = Thread(target=s.run)
-            st.daemon = True
-            st.start()
-            sleep(1.0)
-        else:
-            run_server_in_fg = True  # delayed
-
-    # run notify-client in background
-    notify_client = NotifyClient(settings)
-    notify_thread = Thread(
-        name='notify_client', target=notify_client.run)
-    notify_thread.daemon = True
-    notify_thread.start()
+        # ... start server in background thread
+        server_thread = Thread(target=s.run)
+        server_thread.daemon = True
+        server_thread.start()
+        sleep(1.0)
+        # run notify-client in background (always together with server)
+        notify_client = NotifyClient(settings)
+        notify_thread = Thread(
+            name='notify_client', target=notify_client.run)
+        notify_thread.daemon = True
+        notify_thread.start()
 
     # foreground process:
     if do_ui:
-        start_ui(settings)
-    elif run_server_in_fg:
-        s.run()
+        try:
+            start_ui(settings)
+        except ApiConnError:
+            click.echo("Cannot connect to server")
+            sys.exit(1)
+    else:
+        server_thread.join()
     sys.exit(0)
 
 
