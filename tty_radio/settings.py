@@ -15,7 +15,7 @@ class Settings(object):
             'theme': 'auto',
             'confirm_banner_font': 'no',
             'scrobble': 'no',
-            'update_btt_widget': '',
+            'update_btt_widget': 'no',
             'notify_logfile': '',
             'compact_titles': 'yes',  # only show last title in UI?
             'figlet_banners': 'yes',
@@ -52,6 +52,10 @@ class Settings(object):
             'shared secret': '425b55975eed76058ac220b7b4e8a054',
             'username': 'username',
             'password hash': '25b5192f9943196a6044ca1b6b1d30c2',
+        }
+        self.config['BTT'] = {
+            'widget UUID': '',
+            'shared secret': '',
         }
         home = expanduser('~')
         self.file = path_join(home, SETTINGS_FILE)

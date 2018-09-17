@@ -48,7 +48,7 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     scrobble = no
     theme = auto
     notify_logfile =
-    update_btt_widget =
+    update_btt_widget = no
 
     [theme_miami_vice]
     stream_name_banner = yellow
@@ -81,6 +81,10 @@ This package wraps your favorite terminal based audio stream player (like mpg123
     api key = b25b959554ed76058ac220b7b2e0a026
     shared secret = 425b55975eed76058ac220b7b4e8a054
     password hash = 25b5192f9943196a6044ca1b6b1d30c2
+
+    [BTT]
+    widget UUID =
+    shared secret =
 
 
 

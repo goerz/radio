@@ -32,14 +32,20 @@ class NotifyClient(object):
     def __init__(self, settings):
         self._scrobble = (
             settings.config['DEFAULT'].getboolean('scrobble') and PYLAST)
-        self._btt_widget = settings.config['DEFAULT']['update_btt_widget']
-        self._update_btt = len(self._btt_widget) > 0
+        self._update_btt = False
         logfile = settings.config['DEFAULT']['notify_logfile']
         if len(logfile) > 0:
             self._log_fh = open(expanduser(logfile), 'w')
         else:
             self._log_fh = None
         self._filters = ["Commercial-free", ]  # TODO: get this from config
+        if settings.config['DEFAULT'].getboolean('update_btt_widget'):
+            self._update_btt = True
+            self._btt_widget_uuid  = settings.config['BTT']['widget UUID']
+            self._btt_shared_secret = settings.config['BTT']['shared secret']
+            if self._btt_widget_uuid == '':
+                self.log("Disabling update_bbt_widget: no widget UUID")
+                self._update_btt = False
         if self._scrobble:
             self._lastfm_api_key = settings.config['Lastfm']['api key']
             self._lastfm_api_secret = settings.config['Lastfm']['shared secret']
@@ -161,8 +167,10 @@ class NotifyClient(object):
         cmd = [
             'osascript', '-e',
             'tell application "BetterTouchTool" '
-            'to update_touch_bar_widget "' + self._btt_widget +
+            'to update_touch_bar_widget "' + self._btt_widget_uuid +
             '" text "' + song_str + '"']
+        if self._btt_shared_secret != '':
+            cmd[-1] = cmd[-1] + ' shared_secret "%s"' % self._btt_shared_secret
         self.log(cmd)
         subprocess.call(cmd)
 
