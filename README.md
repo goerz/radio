@@ -61,6 +61,39 @@ Also serves a web UI at http://localhost:7887, for remote management.
 `radio` reads settings from a config file in `~/.tty_radio-settings.ini`. The file is automatically created if it does not exist. See `radio config --help` for details.
 
 
+## Color themes
+
+The terminal UI uses color text if possible. By default, it tries to detect whether the terminal has a light or dark background (using the `$COLORFGBG` environment variable) and uses an appropriate color theme. If it cannot detect the terminal background color, the use of color will be disabled.
+
+The behavior can be modified in the config file:
+
+    [UI]
+    theme = auto
+    light_theme = light
+    dark_theme = miami_vice
+    fallback_theme = nocolor
+
+
+If `theme` is `auto`, one of the themes specified in `light_theme`, `dark_theme`, and `fallback_theme` will be used depending on the terminal background color. Alternatively, `theme` may be set to the name of a color theme directly, e.g. to `nocolor` to disable color printing.
+
+The color themes themselves are also defined in the config file, in a section `theme_<themename>`. For example,
+
+    [theme_miami_vice]
+    meta_song_name = blue
+    ui_desc = green
+    stream_exit_confirm = purple
+    ui_names = yellow
+    meta_stream_name = blue
+    stream_name_confirm = purple
+    meta_prefix = blue
+    meta_prefix_str = >>>
+    meta_prefix_pad = 1
+    ui_banner = red
+    stream_name_banner = yellow
+
+You may define your own themes by adding any such section.
+
+
 ## Scrobbling to Last.fm
 
 You can set up automatic scrobbling of author/title information from the radio stream metadata. This requires that you have the `pylast` Python package installed.

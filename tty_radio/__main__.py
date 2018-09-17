@@ -409,7 +409,7 @@ def config(write, default, backup):
         theme = auto                  # Colortheme (auto: choose automatically)
         light_theme = light           # 'auto' colortheme for light term bg
         dark_theme = miami_vice       # 'auto' colortheme for dark term bg
-        fallback_theme = bw           # 'auto' colortheme for unknown term bg
+        fallback_theme = nocolor      # 'auto' colortheme for unknown term bg
         figlet_banners = yes          # Use figlet ascii-art banners?
         confirm_banner_font = no      # ask about figlet banner font-choice?
 
@@ -449,7 +449,7 @@ def config(write, default, backup):
         meta_prefix = blue
 
         \b
-        [theme_bw]                    # Settings for colortheme 'bw'
+        [theme_nocolor]               # Settings for colortheme 'nocolor'
         stream_name_banner = endc     # 'endc' means 'no color'
         ui_names = endc
         stream_name_confirm = endc

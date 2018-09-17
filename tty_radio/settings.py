@@ -16,7 +16,7 @@ class Settings(object):
             'theme': 'auto',
             'light_theme': 'light',
             'dark_theme': 'miami_vice',
-            'fallback_theme': 'bw',
+            'fallback_theme': 'nocolor',
             'confirm_banner_font': 'no',
             'compact_titles': 'yes',  # only show last title in UI?
             'figlet_banners': 'yes',
@@ -53,7 +53,7 @@ class Settings(object):
             'meta_song_name': 'blue',
             'stream_exit_confirm': 'purple',
         }
-        self.config['theme_bw'] = {
+        self.config['theme_nocolor'] = {
             'ui_banner': 'endc',
             'ui_names': 'endc',
             'ui_desc': 'endc',
