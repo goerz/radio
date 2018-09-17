@@ -17,6 +17,7 @@ class Settings(object):
             'scrobble': 'no',
             'update_btt_widget': '',
             'notify_logfile': '',
+            'compact_titles': 'yes',  # only show last title in UI?
             'volume': '11000',
         }
         self.config['theme_miami_vice'] = {

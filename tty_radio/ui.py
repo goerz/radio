@@ -17,7 +17,6 @@ if PY3:
 else:
     get_input = raw_input
 
-from . import COMPACT_TITLES
 from .color import colors, THEME
 from .banner import bannerize
 from .album import gen_art
@@ -234,6 +233,7 @@ def ui_loop(client, settings, station='favs'):
     display_banner(
         stream['name'],
         confirm=settings.config['DEFAULT'].getboolean('confirm_banner_font'))
+    compact_titles = settings.config['DEFAULT'].getboolean('compact_titles')
     # this play->pause->play loop should never accumulate lines
     # in the output (except for the first Enter they press
     # at a prompt and even then, it's just an empty line)
@@ -242,7 +242,7 @@ def ui_loop(client, settings, station='favs'):
     while do_another:
         display_info()
         try:
-            if display_metadata(c, stream):
+            if display_metadata(c, stream, settings):
                 c.stop()
                 do_another = False
         # TODO poll user input for q to stop
@@ -250,7 +250,7 @@ def ui_loop(client, settings, station='favs'):
             c.pause()
             # clear ctrl+c
             print('\b' * 5 + ' ' * 5 + '\b' * 5, end='')
-            if COMPACT_TITLES:
+            if compact_titles:
                 # clear info, name, song
                 to_del = term_wh()[0]
                 for i in range(3):
@@ -287,14 +287,15 @@ def meta_prefix_str(theme):
     return theme['meta_prefix_str'] + " " * int(theme['meta_prefix_pad'])
 
 
-def display_metadata(client, stream):
+def display_metadata(client, stream, settings):
     # to test these updates against another stream
     #   without conflicting audio:
     #   mpg123 -f 0 -C -@ <url>
     c = client
+    compact_titles = settings.config['DEFAULT'].getboolean('compact_titles')
     station_name = stream['station']
     stream_name = stream['name']
-    if COMPACT_TITLES:
+    if compact_titles:
         print()
         print()
     # stop anything playing from another client
@@ -318,13 +319,13 @@ def display_metadata(client, stream):
         disp_name = stream_name
     if disp_name is not None and disp_name.strip() != '':
         showed_name = True
-        if COMPACT_TITLES:
+        if compact_titles:
             print("\033[A" * 2, end='')
         print_blockify(
             meta_prefix_str(THEME), THEME['meta_prefix'],
             disp_name, THEME['meta_stream_name'],
             wrap=False)
-        if COMPACT_TITLES:
+        if compact_titles:
             print()
     # wait for initial song
     i = 0
@@ -339,7 +340,7 @@ def display_metadata(client, stream):
     showed_song = False
     if song_name is not None and song_name.strip() != '':
         showed_song = True
-        if COMPACT_TITLES:
+        if compact_titles:
             print("\033[A", end='')
             if not showed_name:
                 print("\033[A", end='')
@@ -347,7 +348,7 @@ def display_metadata(client, stream):
             meta_prefix_str(THEME), THEME['meta_prefix'],
             song_name, THEME['meta_song_name'],
             wrap=False)[0]
-        if COMPACT_TITLES and not showed_name:
+        if compact_titles and not showed_name:
             print()
     # keep polling for song title changes
     do_another = True
@@ -356,7 +357,7 @@ def display_metadata(client, stream):
         song_now = status['song']
         if (song_now != song_name and
                 song_now is not None and song_now.strip() != ''):
-            if COMPACT_TITLES:
+            if compact_titles:
                 if not showed_name:
                     print("\033[A", end='')
                 if not showed_song:
