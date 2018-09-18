@@ -21,18 +21,14 @@ nerdy_but_unpretty = [ 'hex', 'octal', 'binary', 'rot13', 'morse' ]
 """
 
 
-# here are the fonts that I find the most interesting:
-FONTS = ['3-d', '3x5', '5lineoblique', 'a_zooloo', 'acrobatic', 'alligator', 'alligator2', 'alphabet', 'avatar', 'banner', 'banner3-D', 'banner4', 'barbwire', 'basic', 'bell', 'big', 'bigchief', 'block', 'britebi', 'broadway', 'bubble', 'bulbhead', 'calgphy2', 'caligraphy', 'catwalk', 'charact1', 'charact4', 'chartri', 'chunky', 'clb6x10', 'coinstak', 'colossal', 'computer', 'contessa', 'contrast', 'cosmic', 'cosmike', 'courbi', 'crawford', 'cricket', 'cursive', 'cyberlarge', 'cybermedium', 'cybersmall', 'devilish', 'diamond', 'digital', 'doh', 'doom', 'dotmatrix', 'double', 'drpepper', 'dwhistled', 'eftichess', 'eftifont', 'eftipiti', 'eftirobot', 'eftitalic', 'eftiwall', 'eftiwater', 'epic', 'fender', 'fourtops', 'fraktur', 'funky_dr', 'fuzzy', 'goofy', 'gothic', 'graceful', 'graffiti', 'helvbi', 'hollywood', 'home_pak', 'invita', 'isometric1', 'isometric2', 'isometric3', 'isometric4', 'italic', 'ivrit', 'jazmine', 'jerusalem', 'kban', 'larry3d', 'lean', 'letters', 'linux', 'lockergnome', 'madrid', 'marquee', 'maxfour', 'mike', 'mini', 'mirror', 'moscow', 'mshebrew210', 'nancyj-fancy', 'nancyj-underlined', 'nancyj', 'new_asci', 'nipples', 'ntgreek', 'nvscript', 'o8', 'odel_lak', 'ogre', 'os2', 'pawp', 'peaks', 'pebbles', 'pepper', 'poison', 'puffy', 'rectangles', 'relief', 'relief2', 'rev', 'roman', 'rounded', 'rowancap', 'rozzo', 'runic', 'runyc', 'sansbi', 'sblood', 'sbookbi', 'script', 'serifcap', 'shadow', 'short', 'sketch_s', 'slant', 'slide', 'slscript', 'small', 'smisome1', 'smkeyboard', 'smscript', 'smshadow', 'smslant', 'smtengwar', 'speed', 'stacey', 'stampatello', 'standard', 'starwars', 'stellar', 'stop', 'straight', 't__of_ap', 'tanja', 'tengwar', 'thick', 'thin', 'threepoint', 'ticks', 'ticksslant', 'tinker-toy', 'tombstone', 'trek', 'tsalagi', 'twin_cob', 'twopoint', 'univers', 'usaflag', 'utopiabi', 'weird', 'whimsy', 'xbritebi', 'xcourbi']  # noqa
-
-
-def rand_font():
+def rand_font(fonts):
     # built-in font fetch doesn't work:
     #   fonts = f.getFonts()
     # do 100 tries in case font doesn't exist
     # if there are 100 failures, bannerize will fail/barf
     #   on its Figlet constructor
     for i in range(100):
-        fi = choice(FONTS)
+        fi = choice(fonts)
         try:
             Figlet(font=fi)
             return fi
@@ -41,18 +37,23 @@ def rand_font():
     return "none"
 
 
-def bannerize(str, term_w, use_pyfiglet=True):
+def bannerize(str, term_w, figlet_fonts, use_pyfiglet=True):
     # do 100 attempts to find a suitable font
     # criteria:
     #   must be narrower than term window
     #   wider than 1/4 the term window(the larger, the prettier)
+    if not isinstance(figlet_fonts, list):
+        figlet_fonts = [fi.strip() for fi in figlet_fonts.split(',')]
     out = "\n" + str + "\n" + '-' * len(str) + "\n"
     fi = "none"
     if not PYFIG or not use_pyfiglet:
         return (out, fi)
     for i in range(100):
-        fi = rand_font()
-        f = Figlet(font=fi, width=term_w)
+        fi = rand_font(figlet_fonts)
+        try:
+            f = Figlet(font=fi, width=term_w)
+        except FontNotFound:
+            continue
         out = f.renderText(str)
         out_IO = StringIO(out)
         out_width = max([len(a) for a in out_IO.readlines()])

@@ -214,8 +214,10 @@ def ui_loop(client, settings, station='favs'):
         confirm_banner_font = False
     banner_txt = deets['ui_name'] + ' Tuner'
     with colors(THEME['ui_banner']):
+        figlet_fonts = settings.config['UI']['figlet_fonts']
         (banner, font) = bannerize(
-            banner_txt, term_w, use_pyfiglet=use_pyfiglet)
+            banner_txt, term_w, figlet_fonts=figlet_fonts,
+            use_pyfiglet=use_pyfiglet)
         b_IO = StringIO(banner)
         b_h = len(b_IO.readlines())
         print(banner)
@@ -242,7 +244,9 @@ def ui_loop(client, settings, station='favs'):
         print('Error, could not get stream details')
         return station
     display_banner(
-        stream['name'], confirm=confirm_banner_font,
+        stream['name'],
+        figlet_fonts=settings.config['UI']['figlet_fonts'],
+        confirm=confirm_banner_font,
         use_pyfiglet=use_pyfiglet)
     try:
         if settings.config['UI'].getboolean('show_stream_ascii_art'):
@@ -438,13 +442,15 @@ def display_album(art_url):
     print("")
 
 
-def display_banner(stream_name, confirm=False, use_pyfiglet=True):
+def display_banner(
+        stream_name, figlet_fonts, confirm=False, use_pyfiglet=True):
     unhappy = True
     while unhappy:
         (term_w, term_h) = term_wh()
         font = "unknown"
         with colors(THEME['stream_name_banner']):
-            (banner, font) = bannerize(stream_name, term_w, use_pyfiglet)
+            (banner, font) = bannerize(
+                stream_name, term_w, figlet_fonts, use_pyfiglet)
             b_IO = StringIO(banner)
             b_height = len(b_IO.readlines())
             if term_h > (b_height + 3):  # Playing, Station Name, Song Title

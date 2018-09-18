@@ -422,6 +422,35 @@ def config(write, default, backup):
         confirm_banner_font = no      ; ask about figlet banner font-choice?
         compact_titles = yes          ; Only show the most current songtitle?
         figlet_banners = yes          ; Use figlet ascii-art banners?
+        #
+        # list of possible figlet fonts. If you have a favorite font, you could
+        # just list that as the only value
+        figlet_fonts = 3-d, 3x5, 5lineoblique, a_zooloo, acrobatic,
+            alligator, alligator2, alphabet, avatar, banner, banner3-D,
+            banner4, barbwire, basic, bell, big, bigchief, block, britebi,
+            broadway, bubble, bulbhead, calgphy2, caligraphy, catwalk,
+            charact1, charact4, chartri, chunky, clb6x10, coinstak, colossal,
+            computer, contessa, contrast, cosmic, cosmike, courbi, crawford,
+            cricket, cursive, cyberlarge, cybermedium, cybersmall, devilish,
+            diamond, digital, doh, doom, dotmatrix, double, drpepper,
+            dwhistled, eftichess, eftifont, eftipiti, eftirobot, eftitalic,
+            eftiwall, eftiwater, epic, fender, fourtops, fraktur, funky_dr,
+            fuzzy, goofy, gothic, graceful, graffiti, helvbi, hollywood,
+            home_pak, invita, isometric1, isometric2, isometric3, isometric4,
+            italic, ivrit, jazmine, jerusalem, kban, larry3d, lean, letters,
+            linux, lockergnome, madrid, marquee, maxfour, mike, mini, mirror,
+            moscow, mshebrew210, nancyj-fancy, nancyj-underlined, nancyj,
+            new_asci, nipples, ntgreek, nvscript, o8, odel_lak, ogre, os2,
+            pawp, peaks, pebbles, pepper, poison, puffy, rectangles, relief,
+            relief2, rev, roman, rounded, rowancap, rozzo, runic, runyc,
+            sansbi, sblood, sbookbi, script, serifcap, shadow, short, sketch_s,
+            slant, slide, slscript, small, smisome1, smkeyboard, smscript,
+            smshadow, smslant, smtengwar, speed, stacey, stampatello, standard,
+            starwars, stellar, stop, straight, t__of_ap, tanja, tengwar, thick,
+            thin, threepoint, ticks, ticksslant, tinker-toy, tombstone, trek,
+            tsalagi, twin_cob, twopoint, univers, usaflag, utopiabi, weird,
+            whimsy, xbritebi, xcourbi
+        #
         show_stream_ascii_art = yes   ; Render stream img in ascii (pillow)?
 
         \b
