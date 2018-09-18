@@ -400,77 +400,82 @@ def config(write, default, backup):
     The configuration may include the following settings:
 
         \b
-        [UI]                          # Settings for the terminal UI
-        compact_titles = yes          # Only show the most current songtitle?
-        theme = auto                  # Colortheme (auto: choose automatically)
-        light_theme = light           # 'auto' colortheme for light term bg
-        dark_theme = miami_vice       # 'auto' colortheme for dark term bg
-        fallback_theme = nocolor      # 'auto' colortheme for unknown term bg
-        figlet_banners = yes          # Use figlet ascii-art banners?
-        confirm_banner_font = no      # ask about figlet banner font-choice?
+        ###########################################
+        # Example config file with default values #
+        ###########################################
 
         \b
-        [Server]                      # Settings for the server
-        host = 127.0.0.1              # Network address to bind to
-        port = 7887                   # Network port to bind to
-        scrobble = no                 # Send srobbles to Last.fm?
-        notify_logfile =              # Log file for srobbles/notifications
-        update_btt_widget = no        # Update any BetterTouchTool widget?
-        volume = 11000                # The default volume (0..32k)
+        [Server]                      ; Settings for the server
+        host = 127.0.0.1              ; Network address to bind to
+        port = 7887                   ; Network port to bind to
+        volume = 11000                ; The default volume (0..32k)
+        scrobble = no                 ; Send srobbles to Last.fm?
+        notify_logfile =              ; Log file for srobbles/notifications
+        update_btt_widget = no        ; Update any BetterTouchTool widget?
 
         \b
-        [theme_miami_vice]            # Settings for colortheme 'miami_vice'
-        stream_name_banner = yellow
-        ui_names = yellow
-        stream_name_confirm = purple
-        meta_stream_name = blue
-        meta_prefix_str = >>>
-        ui_desc = green
-        meta_song_name = blue
-        stream_exit_confirm = purple
+        [UI]                          ; Settings for the terminal UI
+        theme = auto                  ; Colortheme (auto: choose automatically)
+        light_theme = light           ; 'auto' colortheme for light term bg
+        dark_theme = miami_vice       ; 'auto' colortheme for dark term bg
+        fallback_theme = nocolor      ; 'auto' colortheme for unknown term bg
+        confirm_banner_font = no      ; ask about figlet banner font-choice?
+        compact_titles = yes          ; Only show the most current songtitle?
+        figlet_banners = yes          ; Use figlet ascii-art banners?
+
+        \b
+        [theme_miami_vice]            ; Settings for colortheme 'miami_vice'
         ui_banner = red
+        ui_names = yellow
+        ui_desc = green
+        stream_name_banner = yellow
+        stream_name_confirm = purple
+        meta_prefix_str = >>>
         meta_prefix_pad = 1
         meta_prefix = blue
-
-        \b
-        [theme_light]                 # Settings for colortheme 'light'
-        stream_name_banner = grey
-        ui_names = blue
-        stream_name_confirm = purple
         meta_stream_name = blue
-        meta_prefix_str = >>>
-        ui_desc = grey
         meta_song_name = blue
         stream_exit_confirm = purple
-        ui_banner = purple
-        meta_prefix_pad = 1
-        meta_prefix = blue
 
         \b
-        [theme_nocolor]               # Settings for colortheme 'nocolor'
-        stream_name_banner = endc     # 'endc' means 'no color'
-        ui_names = endc
-        stream_name_confirm = endc
-        meta_stream_name = endc
+        [theme_light]                 ; Settings for colortheme 'light'
+        ui_banner = purple
+        ui_names = blue
+        ui_desc = grey
+        stream_name_banner = grey
+        stream_name_confirm = purple
         meta_prefix_str = >>>
+        meta_prefix_pad = 1
+        meta_prefix = blue
+        meta_stream_name = blue
+        meta_song_name = blue
+        stream_exit_confirm = purple
+
+        \b
+        [theme_nocolor]               ; Settings for colortheme 'nocolor'
+        ui_banner = endc              ; 'endc' means 'no color'
+        ui_names = endc
         ui_desc = endc
-        meta_song_name = endc
-        stream_exit_confirm = endc
-        ui_banner = endc
+        stream_name_banner = endc
+        stream_name_confirm = endc
+        meta_prefix_str = >>>
         meta_prefix_pad = 1
         meta_prefix = endc
+        meta_stream_name = endc
+        meta_song_name = endc
+        stream_exit_confirm = endc
 
         \b
-        [Lastfm]                      # Settings for Last.fm API server
-        api key =                     # API key
-        shared secret =               # API shared secret
-        username =                    # Last.fm username
-        password hash =               # md5 hash of Last.fm password
+        [Lastfm]                      ; Settings for Last.fm API server
+        api key =                     ; API key
+        shared secret =               ; API shared secret
+        username =                    ; Last.fm username
+        password hash =               ; md5 hash of Last.fm password
 
         \b
-        [BTT]                         # BetterTouchTool notification settings
-        shared secret =               # BTT secret
-        widget uuid =                 # UUID of widget to update
+        [BTT]                         ; BetterTouchTool notification settings
+        widget uuid =                 ; UUID of widget to update
+        shared secret =               ; BTT secret
 
     Notes:
 
