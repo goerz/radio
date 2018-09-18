@@ -17,7 +17,6 @@ if PY3:
 else:
     from urllib2 import urlopen
 
-from . import DEBUG
 from .stream import Stream
 
 # maximum age of any channel file before rebuilding it
@@ -94,8 +93,7 @@ class Station(object):
         return possibles[0]
 
     def reader(self, line):
-        if DEBUG:
-            print('station sees: %s' % line)
+        pass  # print('station sees: %s' % line)  for debugging
 
 
 class Soma(Station):
