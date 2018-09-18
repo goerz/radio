@@ -67,6 +67,9 @@ def gen_art(url, term_w, term_h):
     if im_width > term_w - 2:
         im_height = int(im_height * (term_w - 2) / im_width)
         im_width = int(im_width * (term_w - 2) / im_width)
+    if im_width < 20 or im_height < 20:
+        # tiny images look bad, so we just skip them
+        return ''
 
     # experiment with aspect ratios according to font
     #   w , h
