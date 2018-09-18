@@ -4,6 +4,8 @@ import os
 import sys
 import json
 import re
+import configparser
+from textwrap import dedent
 from time import sleep
 from shutil import copyfile
 from threading import Thread
@@ -393,6 +395,29 @@ def volume(value, reset, format):
     click.echo(value_str)
 
 
+def _config_from_docstr(docstring, check_against_default=True):
+    lines = []
+    for line in docstring.split("\n"):
+        if line.strip().startswith("###################################"):
+            continue
+        if line.strip().startswith("# Example config file"):
+            continue
+        if line.startswith("    " * 2):
+            lines.append(line.replace("\b", ""))
+        if line.startswith("    Notes:"):
+            break
+    result = dedent("\n".join(lines)).strip() + "\n\n"
+    if check_against_default:
+        config = configparser.ConfigParser(
+            comment_prefixes=('#', ';'),
+            inline_comment_prefixes=(';',),
+            strict=True)
+        config.read_string(result)
+        default_config = Settings(read_file=False).config
+        assert config == default_config
+    return result
+
+
 @radio.command()
 @click.option(
     '--write', is_flag=True,
@@ -422,7 +447,7 @@ def config(write, default, backup):
         host = 127.0.0.1              ; Network address to bind to
         port = 7887                   ; Network port to bind to
         volume = 11000                ; The default volume (0..32k)
-        scrobble = no                 ; Send srobbles to Last.fm?
+        scrobble = no                 ; Send scrobbles to Last.fm?
         notify_logfile =              ; Log file for srobbles/notifications
         update_btt_widget = no        ; Update any BetterTouchTool widget?
 
@@ -551,6 +576,13 @@ def config(write, default, backup):
                     backup_file = settings.file + '~%d' % i
                 copyfile(settings.file, backup_file)
         with open(settings.file, 'w') as out_fh:
-            settings.config.write(out_fh)
+            if default:
+                with open(settings.file, 'w') as out_fh:
+                    out_fh.write(_config_from_docstr(config.__doc__))
+            else:
+                settings.config.write(out_fh)
     else:
-        settings.config.write(sys.stdout)
+        if default:
+            sys.stdout.write(_config_from_docstr(config.__doc__))
+        else:
+            settings.config.write(sys.stdout)

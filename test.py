@@ -2,6 +2,7 @@
 from time import sleep, time
 from json import loads
 from threading import Thread
+import tty_radio.__main__
 from tty_radio.radio import Radio
 from tty_radio.stream import mpg_running
 from tty_radio.api import Server, Client
@@ -184,3 +185,10 @@ def test_api_client():  # noqa
     r = c.stop()
     print('%02d>>> c.stop():%s' % (10, r))
     assert r
+
+
+def test_radio_config():
+    """Check that `radio config` docstring and actual default settings match"""
+    tty_radio.__main__._config_from_docstr(
+        tty_radio.__main__.config.__doc__,
+        check_against_default=True)
