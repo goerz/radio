@@ -148,11 +148,17 @@ class NotifyClient(object):
                 artist, title = self._get_artist_title(status)
                 if artist != current_artist or title != current_title:
                     timestamp = int(time.time())
+                    play_duration = timestamp - current_timestamp
                     if self._scrobble:
                         need_to_scrobble = (
                             current_artist is not None and
-                            current_title is not None and
-                            timestamp - current_timestamp > 30)
+                            current_title is not None)
+                        if need_to_scrobble:
+                            if play_duration <= 30:
+                                self.log(
+                                    "Not scrobbling %s - %s: <30 secs"
+                                    % (current_artist, current_title))
+                                need_to_scrobble = False
                         if need_to_scrobble:
                             self.scrobble(
                                 current_artist, current_title,
@@ -227,7 +233,16 @@ class NotifyClient(object):
                 if s in song:
                     self.log("Filter %s" % song)
                     return None, None
+            song = song.replace(" – ", " - ")
+            song = song.replace("“", '"')
+            song = song.replace("”", '"')
+            song = song.replace("‘", "'")
+            song = song.replace("’", "'")
             artist, title = song.split(" - ", 1)
+            artist = artist.strip()
+            title = title.strip()
+            if len(artist) == 0 or len(title) == 0:
+                raise ValueError("empty artist or title")
             return artist, title
         except (ValueError, AttributeError, KeyError) as exc_info:
             self.log("cannot get artist/title: %s" % exc_info)
