@@ -7,7 +7,6 @@ import re
 from time import sleep
 from shutil import copyfile
 from threading import Thread
-import logging
 
 import requests
 import click
@@ -106,11 +105,8 @@ class AliasedGroup(click.Group):
 @click.group(cls=AliasedGroup, invoke_without_command=True)
 @click.help_option('--help', '-h')
 @click.version_option(version=__version__)
-@click.option(
-    '--debug', is_flag=True,
-    help='Enable debug logging')
 @click.pass_context
-def radio(ctx, debug):
+def radio(ctx):
     """
     \b
     tty-radio User Interfaces
@@ -144,11 +140,6 @@ def radio(ctx, debug):
     If this file does not exist, it will be created with the default settings.
     See `radio config --help` for details.
     """
-    logging.basicConfig(level=logging.WARNING)
-    logger = logging.getLogger(__name__)
-    if debug:
-        logger.setLevel(logging.DEBUG)
-        logger.debug("Enabled debug output")
     if ctx.invoked_subcommand is None:
         main(do_ui=True)
 
