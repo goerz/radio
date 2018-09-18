@@ -10,7 +10,7 @@ if PY3:
     from urllib.request import urlopen, URLError
 else:
     from urllib2 import urlopen, URLError
-PYPILLOW = False
+PYPILLOW = True
 try:
     from PIL import Image
 except ImportError:
@@ -25,17 +25,6 @@ def gen_art(url, term_w, term_h):
     # mod by x0rion Feb 2014
     # print("Printing ASCII Art for " + url)
     if not PYPILLOW:
-        return
-    im_height = term_h - 5  # leave room for other output
-    # optimal image is 2x wider than higher make sure it can fit in term
-    if term_w < (term_h * 2):
-        im_height = int(term_w / 2)
-    im_width = im_height * 2
-    # im_width <= term_w, bc im_w=term_w/2*2 = (im_w=im_h*2 and im_h=term_w/2)
-    if im_height < 25:
-        print("Not drawing art until terminal gets bigger(im_h >= 25)")
-        print("(w,h) im: (%d,%d) term: (%d,%d)" %
-              (im_width, im_height, term_w, term_h))
         return
 
     # greyscale.. the following strings represent
@@ -69,6 +58,16 @@ def gen_art(url, term_w, term_h):
         return
 
     im = Image.open(BytesIO(image))
+    w, h = im.size
+
+    im_height = term_h//2
+    im_width = 2 * int((w / h) * im_height)
+    # factor 2 is due to the fact that ascii characters are roughtly twice as
+    # high as they are wide
+    if im_width > term_w - 2:
+        im_height = int(im_height * (term_w - 2) / im_width)
+        im_width = int(im_width * (term_w - 2) / im_width)
+
     # experiment with aspect ratios according to font
     #   w , h
     # im=im.resize((160, 75),Image.BILINEAR)

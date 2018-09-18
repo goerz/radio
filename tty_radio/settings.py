@@ -33,6 +33,7 @@ class Settings(object):
                 ('confirm_banner_font', 'no'),
                 ('compact_titles', 'yes'),
                 ('figlet_banners', 'yes'),
+                ('show_stream_ascii_art', 'yes'),
             ])),
             ('theme_miami_vice', OrderedDict([
                 ('ui_banner', 'red'),

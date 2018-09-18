@@ -422,6 +422,7 @@ def config(write, default, backup):
         confirm_banner_font = no      ; ask about figlet banner font-choice?
         compact_titles = yes          ; Only show the most current songtitle?
         figlet_banners = yes          ; Use figlet ascii-art banners?
+        show_stream_ascii_art = yes   ; Render stream img in ascii (pillow)?
 
         \b
         [theme_miami_vice]            ; Settings for colortheme 'miami_vice'

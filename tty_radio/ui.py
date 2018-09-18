@@ -241,11 +241,18 @@ def ui_loop(client, settings, station='favs'):
     if stream is None:
         print('Error, could not get stream details')
         return station
-    display_album(stream['art'])
     display_banner(
         stream['name'], confirm=confirm_banner_font,
         use_pyfiglet=use_pyfiglet)
-    compact_titles = settings.config['UI'].getboolean('compact_titles')
+    try:
+        if settings.config['UI'].getboolean('show_stream_ascii_art'):
+            display_album(stream['art'])
+    except ValueError:
+        pass
+    try:
+        compact_titles = settings.config['UI'].getboolean('compact_titles')
+    except ValueError:
+        compact_titles = False
     # this play->pause->play loop should never accumulate lines
     # in the output (except for the first Enter they press
     # at a prompt and even then, it's just an empty line)
@@ -426,8 +433,9 @@ def display_album(art_url):
     art = gen_art(art_url, term_w, term_h)
     if art is None:
         return
-    print("ASCII Printout of Station's Logo:")
+    print("")
     print(art)
+    print("")
 
 
 def display_banner(stream_name, confirm=False, use_pyfiglet=True):
