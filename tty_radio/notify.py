@@ -68,7 +68,9 @@ class NotifyClient(object):
             self._lastfm_network = None  # set by _authenticate_lastfm
             self._authenticate_lastfm()
             self._scrobbles = []
-        self.client = Client()
+        host = settings.config['Server']['host']
+        port = settings.config['Server'].getint('port')
+        self.client = Client(host, port)
 
     def log(self, msg, timestamp=True):
         """Write a msg to the internal log file

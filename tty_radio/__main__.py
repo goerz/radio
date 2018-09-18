@@ -3,11 +3,13 @@ from __future__ import print_function
 import os
 import sys
 import json
+import re
 from time import sleep
 from shutil import copyfile
 from threading import Thread
 import logging
 
+import requests
 import click
 
 from .ui import ui as start_ui
@@ -25,6 +27,8 @@ def main(do_ui, theme=None, vol=None, scrobble=None):
     try:
         settings = Settings(theme=theme, vol=vol, scrobble=scrobble)
         Stream.vol = settings.config['Server']['volume']
+        host = settings.config['Server']['host']
+        port = settings.config['Server']['port']
         if do_ui:
             load_theme(settings)
     except (ValueError, TypeError) as exc_info:
@@ -33,13 +37,16 @@ def main(do_ui, theme=None, vol=None, scrobble=None):
 
     try:
         # is there a server running already?
-        Client().status()  # raises ApiConnError if no server running
+        Client(host, port).status()  # raises ApiConnError if no server running
         if not do_ui:
             click.echo("Server already running")
             sys.exit(1)
+    except requests.exceptions.RequestException as exc_info:
+        click.echo("Error starting server: %s" % exc_info)
+        sys.exit(1)
     except ApiConnError:
         # no server running ...
-        s = Server()
+        s = Server(host, port)
         # ... start server in background thread
         server_thread = Thread(target=s.run)
         server_thread.daemon = True
@@ -175,24 +182,41 @@ def ui(theme, vol, scrobble):
     main(do_ui=True, theme=theme, vol=vol, scrobble=scrobble)
 
 
+def _get_client(quiet=False):
+    """Get Client instance, for the scripting interface commands"""
+    try:
+        settings = Settings()
+        host = settings.config['Server']['host']
+        port = settings.config['Server']['port']
+    except (ValueError, TypeError) as exc_info:
+        click.echo("Error in config: %s" % str(exc_info))
+        sys.exit(1)
+    client = Client(host, port)
+    try:
+        client.status()
+    except requests.exceptions.RequestException as exc_info:
+        if not quiet:
+            click.echo("Error connecting to server: %s" % exc_info)
+        sys.exit(1)
+    except ApiConnError:
+        if not quiet:
+            click.echo("Cannot connect to server")
+        sys.exit(1)
+    return client
+
+
 @radio.command()
 def pause():
     """Pause playback."""
-    try:
-        Client().pause()
-    except ApiConnError:
-        click.echo("Cannot connect to server")
-        sys.exit(1)
+    client = _get_client()
+    client.pause()
 
 
 @radio.command()
 def stop():
     """Stop playback."""
-    try:
-        Client().stop()
-    except ApiConnError:
-        click.echo("Cannot connect to server")
-        sys.exit(1)
+    client = _get_client()
+    client.stop()
 
 
 def _find_station(stations, search_str, station):
@@ -221,34 +245,30 @@ def play(station, search):
     streams are searched for a matching stream name (case-insensitive, ignoring
     whitespace).
     """
-    try:
-        client = Client()
-        stream = None
-        if len(search) > 0:
-            search_str = "".join(search)
-            stations = Client().stations()
-            try:
-                station, stream = _find_station(stations, search_str, station)
-            except TypeError:
-                if station is None:
-                    click.echo(
-                        "Cannot find a stream matching '%s'" % search_str)
-                else:
-                    click.echo(
-                        "Cannot find a stream matching '%s' in station '%s'"
-                        % (search_str, station))
-                sys.exit(1)
-            click.echo("Playing station: %s" % stream)
-        status = client.status()
-        if not status['paused'] or status['currently_streaming']:
-            client.stop()
-        if stream is None and status['stream'] is None:
-            click.echo("No active stream. Specify a stream name")
+    client = _get_client()
+    stream = None
+    if len(search) > 0:
+        search_str = "".join(search)
+        stations = client.stations()
+        try:
+            station, stream = _find_station(stations, search_str, station)
+        except TypeError:
+            if station is None:
+                click.echo(
+                    "Cannot find a stream matching '%s'" % search_str)
+            else:
+                click.echo(
+                    "Cannot find a stream matching '%s' in station '%s'"
+                    % (search_str, station))
             sys.exit(1)
-        client.play(station, stream)
-    except ApiConnError:
-        click.echo("Cannot connect to server")
+        click.echo("Playing station: %s" % stream)
+    status = client.status()
+    if not status['paused'] or status['currently_streaming']:
+        client.stop()
+    if stream is None and status['stream'] is None:
+        click.echo("No active stream. Specify a stream name")
         sys.exit(1)
+    client.play(station, stream)
 
 
 @radio.command()
@@ -268,29 +288,22 @@ def status(song, stream, quiet):
     ``radio status --song --quiet`` is useful to generate a string to be shown
     in a UI element.
     """
-    try:
-        status = Client().status()
-        if song:
-            click.echo(_render_song_str(status, show_stream=stream))
-        elif stream:
-            click.echo(status['stream'])
-        else:
-            click.echo(json.dumps(status))
-    except ApiConnError:
-        if not quiet:
-            click.echo("Cannot connect to server")
-        sys.exit(1)
+    client = _get_client(quiet=quiet)
+    status = client.status()
+    if song:
+        click.echo(_render_song_str(status, show_stream=stream))
+    elif stream:
+        click.echo(status['stream'])
+    else:
+        click.echo(json.dumps(status))
 
 
 @radio.command()
 def stations():
     """List stations and feeds, as json-formatted string"""
-    try:
-        stations = Client().stations()
-        click.echo(json.dumps(stations))
-    except ApiConnError:
-        click.echo("Cannot connect to server")
-        sys.exit(1)
+    client = _get_client()
+    stations = client.stations()
+    click.echo(json.dumps(stations))
 
 
 @click.option(
@@ -298,22 +311,18 @@ def stations():
 @radio.command()
 def toggle(stop):
     """Toggle between play/pause."""
-    try:
-        client = Client()
-        status = client.status()
-        if status['stream'] is None:
-            click.echo("Not tuned into a stream")
-            return
-        if status['paused'] or not status['currently_streaming']:
-            client.play()
+    client = _get_client()
+    status = client.status()
+    if status['stream'] is None:
+        click.echo("Not tuned into a stream")
+        return
+    if status['paused'] or not status['currently_streaming']:
+        client.play()
+    else:
+        if stop:
+            client.stop()
         else:
-            if stop:
-                client.stop()
-            else:
-                client.pause()
-    except ApiConnError:
-        click.echo("Cannot connect to server")
-        sys.exit(1)
+            client.pause()
 
 
 @radio.command()
@@ -337,51 +346,47 @@ def volume(value, reset, format):
 
     If --format is not specified, the format of --value will be autodetected
     """
-    try:
-        client = Client()
-        status = client.status()
-        if reset:
-            settings = Settings()
-            value = _check_volume(settings.config['Server']['volume'])
-            format = 'int'
-        if value is not None:
-            input_format = format
-            if input_format is None:
-                try:
-                    input_format = _get_volume_input_format(value)
-                except (ValueError, TypeError):
-                    click.echo("Invalid value: %s" % value)
-                    sys.exit(1)
-            if input_format == 'float':
-                value = int(float(value) * 32000)
-            elif input_format == 'percent':
-                if value.endswith('%'):
-                    value = value[:-1]
-                value = int(float(value) * 320)
-            if value != status['volume']:
-                client.volume(value)
-                if status['currently_streaming']:
-                    client.stop()
-                    client.play()
-                status = client.status()
-        value = status['volume']
-        float_str = str(float(value)/32000.0)
-        int_str = str(int(value))
-        percent_str = str(int(float(value)/320)) + "%"
-        if reset:
-            format = None
-        if format == 'float':
-            value_str = float_str
-        elif format == 'int':
-            value_str = int_str
-        elif format == 'percent':
-            value_str = percent_str
-        else:
-            value_str = "%s / %s / %s" % (int_str, float_str, percent_str)
-        click.echo(value_str)
-    except ApiConnError:
-        click.echo("Cannot connect to server")
-        sys.exit(1)
+    client = _get_client()
+    status = client.status()
+    if reset:
+        settings = Settings()
+        value = _check_volume(settings.config['Server']['volume'])
+        format = 'int'
+    if value is not None:
+        input_format = format
+        if input_format is None:
+            try:
+                input_format = _get_volume_input_format(value)
+            except (ValueError, TypeError):
+                click.echo("Invalid value: %s" % value)
+                sys.exit(1)
+        if input_format == 'float':
+            value = int(float(value) * 32000)
+        elif input_format == 'percent':
+            if value.endswith('%'):
+                value = value[:-1]
+            value = int(float(value) * 320)
+        if value != status['volume']:
+            client.volume(value)
+            if status['currently_streaming']:
+                client.stop()
+                client.play()
+            status = client.status()
+    value = status['volume']
+    float_str = str(float(value)/32000.0)
+    int_str = str(int(value))
+    percent_str = str(int(float(value)/320)) + "%"
+    if reset:
+        format = None
+    if format == 'float':
+        value_str = float_str
+    elif format == 'int':
+        value_str = int_str
+    elif format == 'percent':
+        value_str = percent_str
+    else:
+        value_str = "%s / %s / %s" % (int_str, float_str, percent_str)
+    click.echo(value_str)
 
 
 @radio.command()
@@ -415,6 +420,8 @@ def config(write, default, backup):
 
         \b
         [Server]                      # Settings for the server
+        host = 127.0.0.1              # Network address to bind to
+        port = 7887                   # Network port to bind to
         scrobble = no                 # Send srobbles to Last.fm?
         notify_logfile =              # Log file for srobbles/notifications
         update_btt_widget = no        # Update any BetterTouchTool widget?
@@ -475,6 +482,10 @@ def config(write, default, backup):
         widget uuid =                 # UUID of widget to update
 
     Notes:
+
+        * The default host 127.0.0.1 allows local clients only.
+          The host 0.0.0.0 binds to all available interfaces, and thus allows
+          remote clients, and remote access to the web interface.
 
         * You must register at https://www.last.fm/api/account/create to get
           the Last.fm API key and shared secret.

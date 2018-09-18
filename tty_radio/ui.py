@@ -174,7 +174,9 @@ def get_choice(station, streams):
 def ui(settings):
     # set term title
     sys.stdout.write("\x1b]0;" + "~=radio tuner=~" + "\x07")
-    c = Client()
+    host = settings.config['Server']['host']
+    port = settings.config['Server'].getint('port')
+    c = Client(host, port)
     do_another = True
     next_st = 'favs'
     while do_another:

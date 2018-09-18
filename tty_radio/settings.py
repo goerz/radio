@@ -22,6 +22,8 @@ class Settings(object):
             'figlet_banners': 'yes',
         }
         self.config['Server'] = {
+            'host': '127.0.0.1',
+            'port': '7887',
             'scrobble': 'no',
             'notify_logfile': '',
             'volume': '11000',

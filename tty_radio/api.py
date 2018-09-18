@@ -5,6 +5,7 @@ if platform.python_version().startswith('3'):
     PY3 = True
 import json
 import requests
+import sys
 import os
 from bottle import (
     run,
@@ -21,7 +22,6 @@ from .stream import Stream
 
 
 BOTTLE_DEBUG = False
-PORT = 7887
 
 
 def load_request(possible_keys):
@@ -38,11 +38,9 @@ class ApiConnError(BaseException):
 
 
 class Server(object):
-    def __init__(self, addr=None, radio=None):
-        self.host = '127.0.0.1'
-        self.port = PORT
-        if addr is not None:
-            (self.host, self.port) = addr
+    def __init__(self, host, port, radio=None):
+        self.host = host
+        self.port = port
         self.radio = radio
         if radio is None:
             self.radio = Radio()
@@ -84,8 +82,14 @@ class Server(object):
         post('/api/v1.1/volume/<value>')(self.volume)
         put('/api/v1.1/player')(self.pause)
         delete('/api/v1.1/player')(self.stop)
-        run(host=self.host, port=self.port,
-            debug=BOTTLE_DEBUG, quiet=not BOTTLE_DEBUG)
+        try:
+            run(host=self.host, port=self.port,
+                debug=BOTTLE_DEBUG, quiet=not BOTTLE_DEBUG)
+        except (OSError, OverflowError) as exc_info:
+            print("SERVER ERROR: %s." % exc_info)
+            print("Check network settings (host, port) in config")
+            sys.exit(1)
+
 
     # def enable_cors(self):
     #     '''Add headers to enable CORS'''
@@ -282,11 +286,9 @@ class Client(object):
     """Importable Python object to wrap REST calls"""
     version = 'v1.1'
 
-    def __init__(self, addr=None):
-        self.host = '127.0.0.1'
-        self.port = PORT
-        if addr is not None:
-            (self.host, self.port) = addr
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
 
     def url(self, endpoint):
         return ('http://%s:%s/api/%s/%s' %

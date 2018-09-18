@@ -72,7 +72,7 @@ def test_obj():  # noqa
 
 def test_api_serv():  # noqa
     r = Radio()
-    s = Server(radio=r)
+    s = Server('127.0.0.1', 7887, radio=r)
     r = s.index()
     print('%02d>>> s.index:%s' % (0, r))
     assert loads(r)['success']
@@ -139,12 +139,12 @@ def test_api_serv():  # noqa
 
 def test_api_client():  # noqa
     r = Radio()
-    s = Server(radio=r)
+    s = Server('127.0.0.1', 7887, radio=r)
     st = Thread(target=s.run)
     st.daemon = True
     st.start()
     sleep(1)
-    c = Client()
+    c = Client('127.0.0.1', 7887)
     r = c.status()
     print('%02d>>> c.status:%s' % (0, r))
     assert r is not None
