@@ -290,11 +290,24 @@ def status(song, stream, quiet):
 
 
 @radio.command()
-def stations():
-    """List stations and feeds, as json-formatted string"""
+@click.option(
+    '--json', 'print_json', is_flag=True,
+    help='Print stations dictionary in json format'
+)
+def stations(print_json):
+    """List available stations and feeds"""
     client = _get_client()
     stations = client.stations()
-    click.echo(json.dumps(stations))
+    if print_json:
+        click.echo(json.dumps(stations))
+    else:
+        for s in stations:
+            click.echo("")
+            title = "%s (%s)" % (s['ui_name'], s['name'])
+            click.echo(title)
+            click.echo("-" * len(title))
+            for stream in s['streams']:
+                click.echo(stream)
 
 
 @click.option(
