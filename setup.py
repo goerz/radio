@@ -21,6 +21,7 @@ setup(
         'bottle',
         'requests',
         'click',
+        'configparser',  # backport for Python 2.7
     ],
     entry_points={
         'console_scripts': [
