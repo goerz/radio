@@ -1,8 +1,5 @@
 from __future__ import print_function
 import platform
-PY3 = False
-if platform.python_version().startswith('3'):
-    PY3 = True
 import sys
 import textwrap
 import re
@@ -12,6 +9,10 @@ from io import StringIO
 from subprocess import (
     check_output,
     CalledProcessError)
+import click
+PY3 = False
+if platform.python_version().startswith('3'):
+    PY3 = True
 if PY3:
     get_input = input
 else:
@@ -47,7 +48,7 @@ def stream_list(streams):
 
 
 def print_streams(station, streams, stations):
-    (term_w, term_h) = term_wh()
+    (term_w, term_h) = click.get_terminal_size()
     line_cnt = 0
     if len(streams) == 0:
         print("Exiting, empty station file, delete it and rerun")
@@ -92,31 +93,9 @@ def del_prompt(num_chars):
     # determine lines to move up, there is at least 1
     # bc user pressed enter to give input
     # when they pressed Enter, the cursor went to beginning of the line
-    (term_w, term_h) = term_wh()
+    (term_w, term_h) = click.get_terminal_size()
     move_up = int(math.ceil(float(num_chars) / float(term_w)))
     print("\033[A" * move_up + ' ' * num_chars + '\b' * (num_chars), end='')
-
-
-def term_wh():
-    (w, h) = (80, 40)
-    try:
-        # TODO os agnostic tty size
-        # *nix get terminal/console width
-        outp = check_output('stty size', shell=True)
-    except CalledProcessError:
-        return False
-    outp.decode('ascii').strip()
-    try:
-        rows, columns = outp.split()
-    except ValueError:
-        return (w, h)
-    try:
-        w = int(columns)
-        h = int(rows)
-    except ValueError:
-        pass
-    # print("term width: %d"% width)
-    return (w, h)
 
 
 def read_input():
@@ -171,9 +150,13 @@ def get_choice(station, streams):
     # should never be here
 
 
+def set_term_title(title=''):
+    """Set (or clear) the terminal title"""
+    sys.stdout.write("\x1b]0;" + title + "\x07")
+
+
 def ui(settings):
-    # set term title
-    sys.stdout.write("\x1b]0;" + "~=radio tuner=~" + "\x07")
+    set_term_title("~=radio tuner=~")
     host = settings.config['Server']['host']
     port = settings.config['Server'].getint('port')
     c = Client(host, port)
@@ -186,8 +169,7 @@ def ui(settings):
             do_another = False
         if next_st == 'q':
             do_another = False
-    # clear term title
-    sys.stdout.write("\x1b]0;" + "\x07")
+    set_term_title()  # clear
 
 
 def ui_loop(client, settings, station='favs'):
@@ -202,7 +184,7 @@ def ui_loop(client, settings, station='favs'):
     # streams.sort()  # put in alpha order
     # ######
     # print stations
-    (term_w, term_h) = term_wh()
+    (term_w, term_h) = click.get_terminal_size()
     try:
         use_pyfiglet = settings.config['UI'].getboolean('figlet_banners')
     except ValueError:
@@ -275,7 +257,7 @@ def ui_loop(client, settings, station='favs'):
             print('\b' * 5 + ' ' * 5 + '\b' * 5, end='')
             if compact_titles:
                 # clear info, name, song
-                to_del = term_wh()[0]
+                to_del = click.get_terminal_size()[0]
                 for i in range(3):
                     print("\033[A" + ' ' * to_del + '\b' * to_del, end='')
                 sys.stdout.flush()
@@ -301,7 +283,7 @@ def display_info():
     msg1 = "Playing stream, enjoy..."
     msg2 = "[ctrl-c for pause/options]"
     with colors(THEME['stream_name_confirm']):
-        if term_wh()[0] <= (len(msg1) + len(msg2)):
+        if click.get_terminal_size()[0] <= (len(msg1) + len(msg2)):
             print(msg1)
         else:
             print(msg1 + ' ' + msg2)
@@ -413,7 +395,7 @@ def print_blockify(prefix='', prefix_color='endc',
     with colors(prefix_color):
         # sys.stdout.write && flush
         print(prefix, end='')
-    (term_w, term_h) = term_wh()
+    (term_w, term_h) = click.get_terminal_size()
     lines = textwrap.wrap(blk, term_w - p_len)
     max_blk_len = len(lines[0])
     with colors(blk_color):
@@ -433,7 +415,7 @@ def print_blockify(prefix='', prefix_color='endc',
 def display_album(art_url):
     if art_url is None or art_url == '':
         return
-    (term_w, term_h) = term_wh()
+    (term_w, term_h) = click.get_terminal_size()
     art = gen_art(art_url, term_w, term_h)
     if art is None:
         return
@@ -446,7 +428,7 @@ def display_banner(
         stream_name, figlet_fonts, confirm=False, use_pyfiglet=True):
     unhappy = True
     while unhappy:
-        (term_w, term_h) = term_wh()
+        (term_w, term_h) = click.get_terminal_size()
         font = "unknown"
         with colors(THEME['stream_name_banner']):
             (banner, font) = bannerize(
